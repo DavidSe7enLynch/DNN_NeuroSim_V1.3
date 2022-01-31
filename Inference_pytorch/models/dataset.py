@@ -3,6 +3,22 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import os
 
+def get_simplematrix(batch_size, **kwargs):
+    num_workers = kwargs.setdefault('num_workers', 1)
+    kwargs.pop('input_size', None)
+    print("Building simple matrix with {} workers".format(num_workers))
+    #ds = []
+    input_matrix = torch.tensor([
+        [1,2,3,4],
+        [5,6,7,8],
+        [9,10,11,12],
+        [13,14,15,16]
+    ], dtype=torch.float32)
+
+    #test_loader = torch.utils.data.DataLoader(dataset=input_matrix,batch_size=batch_size, shuffle=True, **kwargs)
+    #ds.append(test_loader)
+    return input_matrix
+    
 def get_cifar10(batch_size, data_root='/tmp/public_dataset/pytorch', train=True, val=True, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'cifar10-data'))
     num_workers = kwargs.setdefault('num_workers', 1)

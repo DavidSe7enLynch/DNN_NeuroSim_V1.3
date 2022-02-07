@@ -8,12 +8,7 @@ def get_simplematrix(batch_size, **kwargs):
     kwargs.pop('input_size', None)
     print("Building simple matrix with {} workers".format(num_workers))
     #ds = []
-    input_matrix = torch.tensor([
-        [1,2,3,4],
-        [5,6,7,8],
-        [9,10,11,12],
-        [13,14,15,16]
-    ], dtype=torch.float32)
+    input_matrix = torch.rand(100000,128)
 
     #test_loader = torch.utils.data.DataLoader(dataset=input_matrix,batch_size=batch_size, shuffle=True, **kwargs)
     #ds.append(test_loader)

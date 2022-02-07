@@ -32,6 +32,7 @@ parser.add_argument('--wl_weight', default=8)
 parser.add_argument('--wl_grad', default=8)
 parser.add_argument('--wl_activate', default=8)
 parser.add_argument('--wl_error', default=8)
+#parser.add_argument('--cuda', default=0)
 # Hardware Properties
 # if do not consider hardware effects, set inference=0
 parser.add_argument('--inference', default=0, help='run hardware inference simulation')
@@ -68,7 +69,7 @@ if args.cuda:
 	torch.cuda.manual_seed(args.seed)
 
 # data loader and model
-assert args.dataset in ['cifar10', 'cifar100', 'imagenet'], args.dataset
+assert args.dataset in ['cifar10', 'cifar100', 'imagenet','simplematrix'], args.dataset
 if args.dataset == 'cifar10':
     train_loader, test_loader = dataset.get_cifar10(batch_size=args.batch_size, num_workers=1)
 elif args.dataset == 'cifar100':
@@ -81,7 +82,7 @@ elif args.dataset == 'simplematrix':
 else:
     raise ValueError("Unknown dataset type")
     
-assert args.model in ['VGG8', 'DenseNet40', 'ResNet18'], args.model
+assert args.model in ['VGG8', 'DenseNet40', 'ResNet18','Llayer'], args.model
 if args.model == 'VGG8':
     from models import VGG
     model_path = './log/VGG8.pth'   # WAGE mode pretrained model
@@ -120,6 +121,7 @@ criterion = torch.nn.CrossEntropyLoss()
 # for data, target in test_loader:
 if args.model == 'Llayer':
     hook_handle_list = hook.hardware_evaluation(modelCF,args.wl_weight,args.wl_activate,args.model,args.mode)
+    output = modelCF(test_loader)
     hook.remove_hook_list(hook_handle_list)
 
 else: 

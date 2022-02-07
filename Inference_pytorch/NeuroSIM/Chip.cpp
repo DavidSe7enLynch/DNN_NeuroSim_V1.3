@@ -110,8 +110,10 @@ vector<int> ChipDesignInitialize(InputParameter& inputParameter, Technology& tec
 					numPE = temp;
 				}
 			}
+             cout << "numPE is "<<numPE << "num of layer is " << numLayer << "netStructure[i][3] is "<<netStructure[i][3] << "netStructure[i][4] is "<< netStructure[i][4]<<endl;
 		}
 		*numPENM = numPE;
+        cout << "numPE is "<<numPE <<endl;
 		// mark the layers that use novel mapping
 		for (int i=0; i<numLayer; i++) {
 			
@@ -120,7 +122,8 @@ vector<int> ChipDesignInitialize(InputParameter& inputParameter, Technology& tec
 				&&(netStructure[i][2]*netStructure[i][3]*netStructure[i][4]*numRowPerSynapse >= param->numRowSubArray)) {
 				markNM.push_back(1);
 				minCube = pow(2, ceil((double) log2((double) netStructure[i][5]*(double) numColPerSynapse) ) );
-				*maxPESizeNM = max(minCube, (*maxPESizeNM));
+				cout << "minCube is " << minCube << "netStructure[i][5] is " << netStructure[i][5] << "numColPerSynapse is " << numColPerSynapse <<endl;
+                *maxPESizeNM = max(minCube, (*maxPESizeNM));
 			} else {
 				// small Cov layers and FC layers use conventional mapping
 				markNM.push_back(0);
@@ -203,7 +206,7 @@ vector<vector<double> > ChipFloorPlan(bool findNumTile, bool findUtilization, bo
 
 	if (param->novelMapping) {		// Novel Mapping
 		if (maxPESizeNM < 2*param->numRowSubArray) {
-			cout << "ERROR: SubArray Size is too large, which break the chip hierarchey, please decrease the SubArray size! " << endl;
+			cout << "ERROR: SubArray Size is too large, which break the chip hierarchey, please decrease the SubArray size! maxPESizeNM is" << maxPESizeNM << "numColPerSynapse is " << numColPerSynapse << "netStructure[i][5] is " << netStructure[0][5] << endl;
 		}else{
 		
 			/*** Tile Design ***/
@@ -262,7 +265,7 @@ vector<vector<double> > ChipFloorPlan(bool findNumTile, bool findUtilization, bo
 		}
 	} else {   // all Conventional Mapping
 		if (maxTileSizeCM < 4*param->numRowSubArray) {
-			cout << "ERROR: SubArray Size is too large, which break the chip hierarchey, please decrease the SubArray size! " << endl;
+			cout << "ERROR: SubArray Size is too large, which break the chip hierarchey, please decrease the SubArray size! maxTileSizeCM is " << maxTileSizeCM << endl;
 		} else {
 			/*** Tile Design ***/
 			*desiredTileSizeCM = MAX(maxTileSizeCM, 4*param->numRowSubArray);

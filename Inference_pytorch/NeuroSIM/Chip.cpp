@@ -398,7 +398,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	}
 	
 	// define bufferSize for inference operation
-	int bufferSize = param->numBitInput*maxLayerInput;										 
+	float bufferSize = param->numBitInput*maxLayerInput;										 
 	
 	//globalBuffer->Initialize(param->numBitInput*maxLayerInput, globalBusWidth, 1, param->unitLengthWireResistance, param->clkFreq, param->globalBufferType);
 	numBufferCore = ceil(bufferSize/(param->globalBufferCoreSizeRow*param->globalBufferCoreSizeCol));
@@ -657,8 +657,9 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 									numRowMatrix, numColMatrix, numInVector*param->numBitInput, cell, &tileReadLatency, &tileReadDynamicEnergy, &tileLeakage,
 									&tilebufferLatency, &tilebufferDynamicEnergy, &tileicLatency, &tileicDynamicEnergy, 
 									&tileLatencyADC, &tileLatencyAccum, &tileLatencyOther, &tileEnergyADC, &tileEnergyAccum, &tileEnergyOther, CalculateclkFreq, clkPeriod);
-
+                //cout<<"-----------line660----------ReadLatentcy is: "<<*readLatency<<endl;
 				*readLatency = MAX(tileReadLatency, (*readLatency));
+                //cout<<"-----------line662----------tileReadLatentcy is: "<<tileReadLatency<<endl;
 				*readDynamicEnergy += tileReadDynamicEnergy;
 				*bufferLatency = MAX(tilebufferLatency, (*bufferLatency));
 				*bufferDynamicEnergy += tilebufferDynamicEnergy;

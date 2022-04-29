@@ -41,21 +41,21 @@ class BinaryConv2d(nn.Conv2d):
                         self.bias, self.stride, self.padding,
                         self.dilation, self.groups)
 
-class BinaryFully_connected(nn.linear):
-    def __init__(self, in_features, out_features, bias = True, device = None, dtype = None):
-        super(BinaryFully_connected, self).__init__(in_features, out_features, bias, device, dtype)
+class BinaryFully_connected(nn.Linear):
+    def __init__(self, in_features, out_features, bias = True):
+        super(BinaryFully_connected, self).__init__(in_features, out_features, bias)
         
         self.binarize = FastSign()
 
     def forward(self, input):
-        return F.linear(self.binarize(input), self.binarize(self.weight), self.bias, self.device, self.dtype)
+        return F.linear(self.binarize(input), self.binarize(self.weight)) #, self.bias, self.device, self.dtype)
 
 class simBNN(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, args, num_classes):
         super(simBNN, self).__init__()
 
         # Stage 1 
-        self.conv1 = nn.Conv2d(in_channels = 1, out_channels = 96 ,kernel_size = (11, 11),stride = (4, 4)) 
+        self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 96 ,kernel_size = (11, 11),stride = (4, 4)) 
         # In_channel would change based on the data structure 
         self.bn1 = nn.BatchNorm2d(96, eps = eps, affine = affine, momentum = bn_mom)
 
@@ -80,7 +80,7 @@ class simBNN(nn.Module):
 
         # Stage 4
         self.act_fc1 = FastSign()
-        self.fc1 = BinaryFully_connected(in_features =256, out_features=4096 )
+        self.fc1 = BinaryFully_connected(in_features = 6, out_features=4096 )
         self.bn6 = nn.BatchNorm2d(4096, eps = eps, affine = affine, momentum = bn_mom)
 
         # Stage 5
@@ -89,7 +89,7 @@ class simBNN(nn.Module):
         self.bn7 = nn.BatchNorm2d(4096, eps = eps, affine = affine, momentum = bn_mom)
 
         # Stage 6 
-        self.fc3 = nn.linear(in_features = 4096, out_features =num_classes )
+        self.fc3 = nn.Linear(in_features = 4096, out_features =num_classes )
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self,x):
@@ -130,6 +130,6 @@ class simBNN(nn.Module):
         x = self.fc3(x)
         x = self.softmax (x)
 
-def simBNN():
-    model = simBNN()
+def simBNN1(args):
+    model = simBNN(args,num_classes =10)
     return model

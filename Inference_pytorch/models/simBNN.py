@@ -1,3 +1,4 @@
+from re import X
 from utee import misc
 import torch.nn as nn
 import torch.nn.functional as F 
@@ -55,12 +56,11 @@ class simBNN(nn.Module):
 
         # Stage 1 
         self.conv1 = nn.Conv2d(in_channels = 1, out_channels = 96 ,kernel_size = (11, 11),stride = (4, 4)) 
-        # Is out_channels just num_filter?
         # In_channel would change based on the data structure 
         self.bn1 = nn.BatchNorm2d(96, eps = eps, affine = affine, momentum = bn_mom)
 
         # Stage 2 
-        self.act_q2 = FastSign() # not sure if this is the right way to define Qactiviation 
+        self.act_q2 = FastSign()
         self.conv2 = BinaryConv2d(in_channels = 96, out_channels = 256 ,kernel_size = (5, 5), padding = (2,2)) 
         # act_bit=BITA & weight_bit=BITW ? 
         self.bn2 = nn.BatchNorm2d(256, eps = eps, affine = affine, momentum = bn_mom)
@@ -79,7 +79,6 @@ class simBNN(nn.Module):
         self.bn5 = nn.BatchNorm2d(256, eps = eps, affine = affine, momentum = bn_mom)
 
         # Stage 4
-        self.flatten = nn.Flatten() # I am not really sure about how this flatten works 
         self.act_fc1 = FastSign()
         self.fc1 = BinaryFully_connected(in_features =256, out_features=4096 )
         self.bn6 = nn.BatchNorm2d(4096, eps = eps, affine = affine, momentum = bn_mom)
@@ -100,31 +99,30 @@ class simBNN(nn.Module):
         x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
 
         # Stage 2 
-        x=self.act_q2(F.relu(x)) 
+        x=self.act_q2(x) 
         x=self.conv2(x) 
         x=self.bn2(x) 
         x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
 
         #Stage 3 
-        x=self.act_q3(F.relu(x)) 
+        x=self.act_q3(x) 
         x=self.conv3(x) 
         x=self.bn3(x) 
-        x=self.act_q4(F.relu(x)) 
+        x=self.act_q4(X) 
         x=self.conv4(x) 
         x=self.bn4(x) 
-        x=self.act_q5(F.relu(x)) 
+        x=self.act_q5(x) 
         x=self.conv5(x) 
         x=self.bn5(x) 
         x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
 
         #Stage 4 
-        x = self.flatten(x)
-        x=self.act_fc1(F.relu(x)) 
+        x=self.act_fc1() 
         x = self.fc1(x)
         x=F.relu(self.bn6(x))
 
         #Stage 5 
-        x=self.act_fc2(F.relu(x)) 
+        x=self.act_fc2() 
         x = self.fc2(x) 
         x=F.relu(self.bn7(x))
 

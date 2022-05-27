@@ -1,0 +1,28 @@
+=================FLAGS==================
+epochs: 200
+test_interval: 1
+t: 0
+lr: 0.01
+log_interval: 100
+wl_activate: 8
+target: 0
+wl_error: 8
+wl_weight: 8
+dataset: cifar10
+detect: 0
+v: 0
+vari: 0
+seed: 117
+onoffratio: 10
+logdir: log/default/ADCprecision=5/batch_size=500/cellBit=4/dataset=cifar10/decreasing_lr=140,180/detect=0/grad_scale=8/inference=0/lr=0.01/mode=WAGE/model=simBNN/onoffratio=10/seed=117/subArray=128/t=0/target=0/v=0/vari=0/wl_activate=8/wl_error=8/wl_grad=8/wl_weight=8
+cellBit: 4
+decreasing_lr: 140,180
+model: simBNN
+wl_grad: 8
+grad_scale: 8
+ADCprecision: 5
+inference: 0
+batch_size: 500
+mode: WAGE
+subArray: 128
+========================================

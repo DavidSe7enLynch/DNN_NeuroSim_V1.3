@@ -29,9 +29,9 @@ class QConv2d(nn.Conv2d):
         self.wl_input = int(wl_input)
         self.inference = inference
         self.onoffratio = onoffratio
-        self.cellBit = cellBit
+        self.cellBit = int(cellBit)
         self.subArray = subArray
-        self.ADCprecision = ADCprecision
+        self.ADCprecision = int(ADCprecision)
         self.vari = vari
         self.t = t
         self.v = v
@@ -265,9 +265,9 @@ class QLinear(nn.Linear):
         self.wl_error = int(wl_error)
         self.inference = inference
         self.onoffratio = onoffratio
-        self.cellBit = cellBit
+        self.cellBit = int(cellBit)
         self.subArray = subArray
-        self.ADCprecision = ADCprecision
+        self.ADCprecision = int(ADCprecision)
         self.vari = vari
         self.t = t
         self.v = v

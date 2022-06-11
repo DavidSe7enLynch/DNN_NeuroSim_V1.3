@@ -109,7 +109,7 @@ class simBNN(nn.Module):
 
         # Stage 4
         self.act_fc1 = FastSign()
-        self.fc1 = BinaryFully_connected(in_features = 3, out_features=4096 )
+        self.fc1 = BinaryFully_connected(in_features = 5, out_features=4096 )
         # Now size is Nx256x3x4096
         self.bn6 = nn.BatchNorm2d(256, eps = eps, affine = affine, momentum = bn_mom)
         # Now size is Nx256x3x4096
@@ -181,7 +181,7 @@ simBNN1 = simBNN(num_classes =10)
 # model.cuda() 
 
 # Define a loss function and a optimizer
-criterion = wage_util.SSE() #criterion = nn.CrossEntropyLoss()  
+criterion = nn.CrossEntropyLoss()  #criterion = wage_util.SSE() 
 optimizer = optim.SGD(simBNN1.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
 
 # Train the network 

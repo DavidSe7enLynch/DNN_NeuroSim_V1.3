@@ -13,6 +13,14 @@ AdderTree.o: AdderTree.cpp constant.h formula.h Technology.h typedef.h \
 Mux.o: Mux.cpp constant.h formula.h Technology.h typedef.h Mux.h \
  InputParameter.h MemCell.h FunctionUnit.h
 FunctionUnit.o: FunctionUnit.cpp FunctionUnit.h
+Tile.o: Tile.cpp Sigmoid.h typedef.h InputParameter.h Technology.h \
+ MemCell.h FunctionUnit.h Adder.h DFF.h RowDecoder.h Mux.h \
+ DecoderDriver.h VoltageSenseAmp.h SenseAmp.h BitShifter.h AdderTree.h \
+ Buffer.h Precharger.h SRAMWriteDriver.h HTree.h ProcessingUnit.h \
+ SubArray.h formula.h WLDecoderOutput.h DeMux.h ReadCircuit.h \
+ SwitchMatrix.h ShiftAdd.h WLNewDecoderDriver.h constant.h \
+ NewSwitchMatrix.h CurrentSenseAmp.h MultilevelSenseAmp.h \
+ MultilevelSAEncoder.h SarADC.h LevelShifter.h Param.h Tile.h
 SubArray.o: SubArray.cpp constant.h formula.h Technology.h typedef.h \
  SubArray.h InputParameter.h MemCell.h FunctionUnit.h Adder.h \
  RowDecoder.h Mux.h WLDecoderOutput.h DFF.h DeMux.h Precharger.h \
@@ -93,14 +101,6 @@ main.o: main.cpp constant.h formula.h Technology.h typedef.h Param.h \
  NewSwitchMatrix.h CurrentSenseAmp.h MultilevelSenseAmp.h \
  MultilevelSAEncoder.h SarADC.h LevelShifter.h Definition.h
 Technology.o: Technology.cpp Technology.h typedef.h
-Tile.o: Tile.cpp Sigmoid.h typedef.h InputParameter.h Technology.h \
- MemCell.h FunctionUnit.h Adder.h DFF.h RowDecoder.h Mux.h \
- DecoderDriver.h VoltageSenseAmp.h SenseAmp.h BitShifter.h AdderTree.h \
- Buffer.h Precharger.h SRAMWriteDriver.h HTree.h ProcessingUnit.h \
- SubArray.h formula.h WLDecoderOutput.h DeMux.h ReadCircuit.h \
- SwitchMatrix.h ShiftAdd.h WLNewDecoderDriver.h constant.h \
- NewSwitchMatrix.h CurrentSenseAmp.h MultilevelSenseAmp.h \
- MultilevelSAEncoder.h SarADC.h LevelShifter.h Param.h Tile.h
 Buffer.o: Buffer.cpp constant.h formula.h Technology.h typedef.h Param.h \
  Buffer.h InputParameter.h MemCell.h FunctionUnit.h RowDecoder.h \
  Precharger.h SenseAmp.h SRAMWriteDriver.h DFF.h

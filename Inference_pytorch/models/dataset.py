@@ -80,7 +80,7 @@ def get_cifar100(batch_size, data_root='/tmp/public_dataset/pytorch', train=True
     ds = ds[0] if len(ds) == 1 else ds
     return ds
 
-def get_imagenet(batch_size, data_root='/home/shimeng/Documents/Data', train=True, val=True, **kwargs):
+def get_imagenet(batch_size, data_root='/scratch/users/lh494/ILSVRC2012_img_val_Pytorch', train=True, val=True, **kwargs):
     # data_root = data_root
     num_workers = kwargs.setdefault('num_workers', 1)
     print("Building ImageNet data loader with {} workers".format(num_workers))
@@ -94,7 +94,7 @@ def get_imagenet(batch_size, data_root='/home/shimeng/Documents/Data', train=Tru
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-        train_path = os.path.join(data_root, 'train')
+        train_path = data_root #os.path.join(data_root, 'train')
         imagenet_traindata = datasets.ImageFolder(train_path, transform=transform)
         train_loader = torch.utils.data.DataLoader(
             imagenet_traindata,
@@ -109,7 +109,7 @@ def get_imagenet(batch_size, data_root='/home/shimeng/Documents/Data', train=Tru
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-        val_path = os.path.join(data_root, 'val')
+        val_path = data_root #os.path.join(data_root, 'val')
         imagenet_testdata = datasets.ImageFolder(val_path, transform=transform)
         test_loader = torch.utils.data.DataLoader(
             imagenet_testdata,

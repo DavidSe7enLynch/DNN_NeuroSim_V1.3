@@ -27,6 +27,7 @@ affine = True
 
 # Load Data Set [64, 3, 224, 224]
 train_loader, test_loader = dataset.get_imagenet(batch_size=batch_size, num_workers=1)
+print ("train_loader is : ", len(train_loader))
 #train_loader, test_loader = dataset.get_cifar10(batch_size=batch_size, num_workers=1)
 
 # Define the BNN model 
@@ -107,98 +108,100 @@ class simBNN(nn.Module):
         # At the end of stage 3, size is [64, 256, 5, 5]
 
         # Stage 4
+        self.flatten = nn.Flatten(0,2)
+        # Now size is 
         self.act_fc1 = FastSign()
         self.fc1 = BinaryFully_connected(in_features = 5, out_features=4096 )
-        # Now size is [64, 256, 5, 4096]
+        # Now size is [64, 256, 5, 4096] it's supposed to be [81920, 4096]
         self.bn6 = nn.BatchNorm2d(256, eps = eps, affine = affine, momentum = bn_mom)
-        # At the end of stage 4, size is [64, 256, 5, 4096]
+        # At the end of stage 4, size is [81920, 4096]
 
         # Stage 5
         self.act_fc2 = FastSign()
         self.fc2 = BinaryFully_connected(in_features = 4096, out_features=4096 ) 
-        # Now size is [64, 256, 5, 4096]
+        # Now size is [81920, 4096]
         self.bn7 = nn.BatchNorm2d(256, eps = eps, affine = affine, momentum = bn_mom)
-        # At the end of stage 5, size is [64, 256, 5, 4096]
+        # At the end of stage 5, size is [81920, 4096]
 
         # Stage 6 
         self.fc3 = nn.Linear(in_features = 4096, out_features =num_classes )
-        # Now size is [64, 256, 5, 1000]
+        # Now size is [81920, 1000]
         self.softmax = nn.Softmax(dim=1)
-        # At the end of stage 6, size is [64, 256, 5, 1000]
+        # At the end of stage 6, size is [81920, 1000]
 
     def forward(self,x):
-        print ("original x is : ", x.size())
+        # print ("original x is : ", x.size())
         # Stage 1 
         x=self.conv1(x)
-        print ("after conv1, x is : ", x.size())
+        #print ("after conv1, x is : ", x.size())
         x=F.relu(self.bn1(x))
         x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
-        print ("At the end of stage 1,  x is : ", x.size())
+        #print ("At the end of stage 1,  x is : ", x.size())
         # Now size is [64, 96, 26, 26]
 
         # Stage 2 
         x=self.act_q2(x) 
         x=self.conv2(x) 
-        print ("After Conv2,  x is : ", x.size())
+        #print ("After Conv2,  x is : ", x.size())
         x=self.bn2(x) 
-        print ("Before maxpool,  x is : ", x.size())
+        #print ("Before maxpool,  x is : ", x.size())
         # Now size is [64, 256, 26, 26]
         x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
-        print ("At the end of stage 2,  x is : ", x.size())
+        #print ("At the end of stage 2,  x is : ", x.size())
         # Now size is [64, 256, 12, 12]
 
         #Stage 3 
         x=self.act_q3(x) 
         x=self.conv3(x) 
-        print ("After Conv3,  x is : ", x.size())
+        #print ("After Conv3,  x is : ", x.size())
         x=self.bn3(x) 
         x=self.act_q4(x) 
         x=self.conv4(x) 
-        print ("After Conv4,  x is : ", x.size())
+        #print ("After Conv4,  x is : ", x.size())
         x=self.bn4(x) 
         x=self.act_q5(x) 
         x=self.conv5(x) 
-        print ("After Conv5,  x is : ", x.size())
+        #print ("After Conv5,  x is : ", x.size())
         x=self.bn5(x) 
-        print ("before maxpool,  x is : ", x.size())
+        #print ("before maxpool,  x is : ", x.size())
         # Now size is [64, 256, 12, 12]
         x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
-        print ("At the end of stage 3,  x is : ", x.size())
+        #print ("At the end of stage 3,  x is : ", x.size())
         # Now size is [64, 256, 5, 5]
 
         #Stage 4 
-        x=self.act_fc1(x) 
+        x = self.flatten(x) 
+        print ("after flatten,  x is : ", x.size())
+        x = self.act_fc1(x) 
         x = self.fc1(x)
-        print ("after fc1,  x is : ", x.size())
+        #print ("after fc1,  x is : ", x.size())
         x=F.relu(self.bn6(x))
-        print ("At the end of stage 4,  x is : ", x.size())
+        #print ("At the end of stage 4,  x is : ", x.size())
 
         #Stage 5 
         x=self.act_fc2(x) 
         x = self.fc2(x) 
-        print ("after fc2,  x is : ", x.size())
+        #print ("after fc2,  x is : ", x.size())
         x=F.relu(self.bn7(x))
-        print ("At the end of stage 5,  x is : ", x.size())
+        #print ("At the end of stage 5,  x is : ", x.size())
 
         #Stage 6 
         x = self.fc3(x)
-        print ("after fc3,  x is : ", x.size())
+        #print ("after fc3,  x is : ", x.size())
         x = self.softmax (x)
-        print ("At the end of stage 6,  x is : ", x.size())
+        #print ("At the end of stage 6,  x is : ", x.size())
         return x 
 
-#def simBNN1():
-#    model = simBNN(num_classes =1000)
-#    return model
 
 simBNN1 = simBNN(num_classes =1000)
 
 # Cuda the model 
-#model = simBNN1()
+# model = simBNN1()
 # model.cuda() 
 
 # Define a loss function and a optimizer
-criterion = nn.CrossEntropyLoss()  #criterion = wage_util.SSE() 
+criterion = nn.CrossEntropyLoss()
+# criterion = wage_util.SSE() 
 optimizer = optim.SGD(simBNN1.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
 
 # Train the network 
@@ -208,7 +211,7 @@ for epoch in range(epoch_num):  # loop over the dataset multiple times
     for i, (inputs, labels) in enumerate(train_loader):
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = Variable(inputs), Variable(labels)
-
+        simBNN1.train()
         # zero the parameter gradients
         optimizer.zero_grad()
         

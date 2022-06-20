@@ -24,24 +24,37 @@ def get_cifar10(batch_size, data_root='/tmp/public_dataset/pytorch', train=True,
         train_loader = torch.utils.data.DataLoader(
             datasets.CIFAR10(
                 root=data_root, train=True, download=True,
-                transform=transforms.Compose([
-                    transforms.Pad(4),
-                    transforms.RandomCrop(32),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                transform = transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 ])),
-            batch_size=batch_size, shuffle=True, **kwargs)
+
+                #transform=transforms.Compose([
+                #    transforms.Pad(4),
+                #    transforms.RandomCrop(32),
+                #    transforms.RandomHorizontalFlip(),
+                #    transforms.ToTensor(),
+                #    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                #])),
+                batch_size=batch_size, shuffle=True, **kwargs)
 
         ds.append(train_loader)
     if val:
         test_loader = torch.utils.data.DataLoader(
             datasets.CIFAR10(
                 root=data_root, train=False, download=True,
-                transform=transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                ])),
+                #transform=transforms.Compose([   
+                #    transforms.ToTensor(),
+                #    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                #])),
+                transform = transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                ])), 
             batch_size=batch_size, shuffle=False, **kwargs)
         ds.append(test_loader)
     ds = ds[0] if len(ds) == 1 else ds

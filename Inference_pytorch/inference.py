@@ -91,7 +91,7 @@ elif args.dataset == 'simplematrix':
 else:
     raise ValueError("Unknown dataset type")
 
-assert args.model in ['VGG8', 'DenseNet40', 'ResNet18', 'Llayer'], args.model
+assert args.model in ['VGG8', 'DenseNet40', 'ResNet18', 'Llayer', 'BNN'], args.model
 if args.model == 'VGG8':
     from models import VGG
 
@@ -121,8 +121,13 @@ elif args.model == 'ResNet18':
     modelCF = ResNet.resnet18(args=args, logger=logger, pretrained=True)
 elif args.model == 'Llayer':
     from models import Llayer
-
     modelCF = Llayer.llayer(args=args, logger=logger)
+
+elif args.model == 'BNN':
+    from models import Alexnet_binary 
+    model_path = ' '  # WAGE mode pretrained model
+    modelCF = Alexnet_binary.alexnet_binary(args=args, logger=logger, pretrained=model_path)
+
 else:
     raise ValueError("Unknown model type")
 
@@ -144,6 +149,12 @@ criterion = torch.nn.CrossEntropyLoss()
 
 # for data, target in test_loader:
 if args.model == 'Llayer':
+    hook_handle_list = hook.hardware_evaluation(modelCF, args.wl_weight, args.wl_activate, args.model, args.mode)
+    output = modelCF(test_loader)
+    hook.remove_hook_list(hook_handle_list)
+
+#? 
+if args.model == 'BNN':
     hook_handle_list = hook.hardware_evaluation(modelCF, args.wl_weight, args.wl_activate, args.model, args.mode)
     output = modelCF(test_loader)
     hook.remove_hook_list(hook_handle_list)

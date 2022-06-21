@@ -35,10 +35,30 @@ cd ../hrr_test
 mkdir ${date}
 cd ../Inference_pytorch
 
-for((i=0;i<${#wl_weight_array[*]};i++)) ; do
-    time=`date +"%Y-%m-%d %T"`
-    echo "====start==== || ${name}=${wl_weight_array[i]} || is_linear=${is_linear} || ${time}"
-    python inference.py --model ${model_name} --${name} ${wl_weight_array[i]} --is_linear ${is_linear} > ../hrr_test/${date}/${model_name}_${name}=${wl_weight_array[i]}_is_linear=${is_linear}_${time}.txt 2>&1
-    time=`date +"%Y-%m-%d %T"`
-    echo "=====end===== || ${name}=${wl_weight_array[i]} || is_linear=${is_linear} || ${time}"
-done
+#for((i=0;i<${#wl_weight_array[*]};i++)) ; do
+#    time=`date +"%Y-%m-%d %T"`
+#    echo "====start==== || ${name}=${wl_weight_array[i]} || is_linear=${is_linear} || ${time}"
+#    python inference.py --model ${model_name} --${name} ${wl_weight_array[i]} --is_linear ${is_linear} > ../hrr_test/${date}/${model_name}_${name}=${wl_weight_array[i]}_is_linear=${is_linear}_${time}.txt 2>&1
+#    time=`date +"%Y-%m-%d %T"`
+#    echo "=====end===== || ${name}=${wl_weight_array[i]} || is_linear=${is_linear} || ${time}"
+#done
+
+# BNN test
+#is_linear=1
+wl_weight=8
+wl_activate=8
+cellBit=4
+ADCprecision=5
+inference=0
+model_bit=4
+model="best-143.pth"
+
+time=`date +"%Y-%m-%d %T"`
+echo "====start==== || ${model_name} || model=${model} || model_bit=${model_bit} || inference=${inference} || is_linear=${is_linear} || wl_weight=${wl_weight} || wl_activate=${wl_activate} || cellBit=${cellBit} || ADCprecision=${ADCprecision} || ${time}"
+#test
+python inference.py --model ${model_name} --inference ${inference} --is_linear ${is_linear} --wl_weight ${wl_weight} --wl_activate ${wl_activate} --cellBit ${cellBit} --ADCprecision ${ADCprecision} > ../hrr_test/${date}/inference_${model_name}_model=${model}_model_bit=${model_bit}_inference=${inference}_is_linear=${is_linear}_wl_weight=${wl_weight}_wl_activate=${wl_activate}_cellBit=${cellBit}_ADCprecision=${ADCprecision}_${time}.txt 2>&1
+#train
+#python train.py --model ${model_name} --inference ${inference} --is_linear ${is_linear} --wl_weight ${wl_weight} --wl_activate ${wl_activate} --cellBit ${cellBit} --ADCprecision ${ADCprecision} > ../hrr_test/${date}/train_${model_name}_is_linear=${is_linear}_wl_weight=${wl_weight}_wl_activate=${wl_activate}_cellBit=${cellBit}_ADCprecision=${ADCprecision}_${time}.txt 2>&1
+time=`date +"%Y-%m-%d %T"`
+echo "=====end===== || ${model_name} || model=${model} || model_bit=${model_bit} || inference=${inference} || is_linear=${is_linear} || wl_weight=${wl_weight} || wl_activate=${wl_activate} || cellBit=${cellBit} || ADCprecision=${ADCprecision} || ${time}"
+

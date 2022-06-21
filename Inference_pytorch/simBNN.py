@@ -4,8 +4,9 @@ import torch.nn.functional as F
 import torch
 from models import dataset
 import torch.optim as optim
-from torch.autograd import Variable
 import time 
+import torchvision.transforms as transforms
+import torchvision
 
 # Assume the input is [4, 3, 32, 32]
 
@@ -13,16 +14,23 @@ import time
 in_channels = 3 
 batch_size = 4
 lr=0.001
-epoch_num = 5 #7
+epoch_num = 5 
 seed = 117 
 
-eps = 0.00002 
-bn_mom = 0.9
-affine = True 
-
 # Load Data Set [4, 3, 32, 32]
-#train_loader, test_loader = dataset.get_imagenet(batch_size=batch_size, num_workers=1)
-train_loader, test_loader = dataset.get_cifar10(batch_size=batch_size, num_workers=2)
+#train_loader, test_loader = dataset.get_cifar10(batch_size=batch_size, num_workers=2)
+transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+])
+
+train_data = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+train_loader = torch.utils.data.DataLoader(train_data, batch_size=4, shuffle=True, num_workers=2)
+
+test_data = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+test_loader = torch.utils.data.DataLoader(test_data, batch_size=4, shuffle=False, num_workers=2)
 
 classes = ('Airplane', 'Car', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck')
 
@@ -74,151 +82,39 @@ class simBNN(nn.Module):
         super(simBNN, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
-            nn.ReLU(inplace=True),
+            #nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            FastSign(),
+            #FastSign(),
             BinaryConv2d(64, 192, kernel_size=5, padding=2),
-            nn.ReLU(inplace=True),
+            #nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            FastSign(),
+            #FastSign(),
             BinaryConv2d(192, 384, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            FastSign(),
+            #nn.ReLU(inplace=True),
+            #FastSign(),
             BinaryConv2d(384, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            FastSign(),
+            #nn.ReLU(inplace=True),
+            #FastSign(),
             BinaryConv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
+            #nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
 
         self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
         self.classifier = nn.Sequential(
+            nn.Dropout(p=0.5, inplace=False),
+            #FastSign(),
+            BinaryFully_connected(256 * 6 * 6, 4096, bias=True),
+            #nn.ReLU(inplace=True),
             nn.Dropout(),
-            FastSign(),
-            BinaryFully_connected(256 * 6 * 6, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            FastSign(),
-            BinaryFully_connected(4096, 4096),
-            nn.ReLU(inplace=True),
-            FastSign(),
-            BinaryFully_connected(4096, num_classes),
+            #FastSign(),
+            BinaryFully_connected(4096, 1024, bias=True),
+            #nn.ReLU(inplace=True),
+            #FastSign(),
+            BinaryFully_connected(1024, num_classes, bias=True),
         )
 
-        # Stage 1 
-        #self.conv1 = nn.Conv2d(in_channels = in_channels, out_channels = 64 ,kernel_size = (11, 11),stride = (4, 4), padding = (2,2))
-        # Now size is [[4, 64, 32, 32]
-        #self.bn1 = nn.BatchNorm2d(96, eps = eps, affine = affine, momentum = bn_mom)
-        # At the end of stage 1, size is 
-
-        # Stage 2 
-        #self.act_q2 = FastSign()
-        #self.conv2 = BinaryConv2d(in_channels = 96, out_channels = 256 ,kernel_size = (5, 5), padding = (2,2)) 
-        # Now size is 
-        #self.bn2 = nn.BatchNorm2d(256, eps = eps, affine = affine, momentum = bn_mom)
-        # At the end of stage 2, size is 
-
-        # Stage 3 
-        #self.act_q3 = FastSign()
-        #self.conv3 = BinaryConv2d(in_channels = 256, out_channels = 384 ,kernel_size = (3, 3), padding = (1,1))
-        # Now size is 
-        #self.bn3 = nn.BatchNorm2d(384, eps = eps, affine = affine, momentum = bn_mom)
-
-        #self.act_q4 = FastSign()
-        #self.conv4 = BinaryConv2d(in_channels = 384, out_channels = 384 ,kernel_size = (3, 3), padding = (1,1))
-        # Now size is 
-        #self.bn4 = nn.BatchNorm2d(384, eps = eps, affine = affine, momentum = bn_mom)
-
-        #self.act_q5 = FastSign()
-        #self.conv5 = BinaryConv2d(in_channels = 384, out_channels = 256 ,kernel_size = (3, 3), padding = (1,1))
-        # Now size is 
-        #self.bn5 = nn.BatchNorm2d(256, eps = eps, affine = affine, momentum = bn_mom)
-        # At the end of stage 3, size is 
-
-        # Stage 4
-        #self.flatten = nn.Flatten(1,3)
-        # Now size is 
-        #self.act_fc1 = FastSign()
-        #self.fc1 = BinaryFully_connected(in_features = 6400, out_features=4096 )
-        # Now size is 
-        #self.bn6 = nn.BatchNorm1d(4096, eps = eps, affine = affine, momentum = bn_mom) 
-        # At the end of stage 4, size is 
-
-        # Stage 5
-        #self.act_fc2 = FastSign()
-        #self.fc2 = BinaryFully_connected(in_features = 4096, out_features=4096 ) 
-        # Now size is 
-        #self.bn7 = nn.BatchNorm1d(4096, eps = eps, affine = affine, momentum = bn_mom)
-        # At the end of stage 5, size is
-
-        # Stage 6 
-        #self.fc3 = nn.Linear(in_features = 4096, out_features =num_classes )
-        # Now size is 
-        #self.softmax = nn.Softmax(dim=1)
-        # At the end of stage 6, size is
-
     def forward(self,x):
-        #print ("original x is : ", x.size())
-        # Stage 1 
-        #x=self.conv1(x)
-        #print ("after conv1, x is : ", x.size())
-        #x=F.relu(self.bn1(x))
-        #x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2), ceil_mode=False)
-        #print ("At the end of stage 1,  x is : ", x.size())
-        # Now size is [64, 96, 26, 26]
-
-        # Stage 2 
-        #x=self.act_q2(x) 
-        #x=self.conv2(x) 
-        #print ("After Conv2,  x is : ", x.size())
-        #x=self.bn2(x) 
-        #print ("Before maxpool,  x is : ", x.size())
-        # Now size is [64, 256, 26, 26]
-        #x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
-        #print ("At the end of stage 2,  x is : ", x.size())
-        # Now size is [64, 256, 12, 12]
-
-        #Stage 3 
-        #x=self.act_q3(x) 
-        #x=self.conv3(x) 
-        #print ("After Conv3,  x is : ", x.size())
-        #x=self.bn3(x) 
-        #x=self.act_q4(x) 
-        #x=self.conv4(x) 
-        #print ("After Conv4,  x is : ", x.size())
-        #x=self.bn4(x) 
-        #x=self.act_q5(x) 
-        #x=self.conv5(x) 
-        #print ("After Conv5,  x is : ", x.size())
-        #x=self.bn5(x) 
-        #print ("before maxpool,  x is : ", x.size())
-        # Now size is [64, 256, 12, 12]
-        #x=F.max_pool2d(x,kernel_size = (3, 3),stride = (2, 2))
-        #print ("At the end of stage 3,  x is : ", x.size())
-        # Now size is [64, 256, 5, 5]
-
-        #Stage 4 
-        #x = self.flatten(x) 
-        #print ("after flatten,  x is : ", x.size())
-        #x = self.act_fc1(x) 
-        #x = self.fc1(x)
-        #print ("after fc1,  x is : ", x.size())
-        #x=F.relu(self.bn6(x))
-        #print ("At the end of stage 4,  x is : ", x.size())
-
-        #Stage 5 
-        #x=self.act_fc2(x) 
-        #x = self.fc2(x) 
-        #print ("after fc2,  x is : ", x.size())
-        #x=F.relu(self.bn7(x))
-       # print ("At the end of stage 5,  x is : ", x.size())
-
-        #Stage 6 
-        #x = self.fc3(x)
-        #print ("after fc3,  x is : ", x.size())
-        #x = self.softmax (x)
-        #print ("At the end of stage 6,  x is : ", x.size())
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
@@ -272,11 +168,11 @@ for epoch in range(epoch_num):  # loop over the dataset multiple times
 print('Finished Training')
 
 # Save the tained model 
-PATH = './simBNN_cifar10.pth'
-torch.save(simBNN1.state_dict(), PATH)
+#PATH = './simBNN_cifar10.pth'
+#torch.save(simBNN1.state_dict(), PATH)
 
-simBNN1 = simBNN(num_classes =10)
-simBNN1.load_state_dict(torch.load(PATH))
+#simBNN1 = simBNN(num_classes =10)
+#simBNN1.load_state_dict(torch.load(PATH))
 
 # Inference and Calculate accuracy 
 correct = 0
@@ -294,3 +190,20 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
 
 print('Accuracy: ', str (100 * correct // total))
+
+class_correct = list(0. for i in range(10))
+class_total = list(0. for i in range(10))
+with torch.no_grad():
+    for i, data in enumerate(test_loader,0):
+        images, labels = data[0].to(device), data[1].to(device)
+        outputs = simBNN1(images)
+        _, predicted = torch.max(outputs, 1)
+        c = (predicted == labels).squeeze()
+        for i in range(4):
+            label = labels[i]
+            class_correct[label] += c[i].item()
+            class_total[label] += 1
+
+for i in range(10):
+    print('Accuracy of %5s : %2d %%' % (
+        classes[i], 100 * class_correct[i] / class_total[i]))

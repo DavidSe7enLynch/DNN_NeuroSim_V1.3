@@ -1,0 +1,8 @@
+2022-06-15 17:14:29 - INFO - saving to ./results/resnet18_binary
+2022-06-15 17:14:29 - DEBUG - run arguments: Namespace(results_dir='./results', save='resnet18_binary', dataset='cifar10', model='resnet_binary', input_size=None, model_config='', type='torch.cuda.FloatTensor', gpus='0', workers=8, epochs=2500, start_epoch=0, batch_size=256, optimizer='SGD', lr=0.1, momentum=0.9, weight_decay=0.0001, print_freq=10, resume='', evaluate=None)
+2022-06-15 17:14:31 - INFO - creating model resnet_binary
+2022-06-15 17:14:31 - INFO - created model with configuration: {'input_size': None, 'dataset': 'cifar10'}
+2022-06-15 17:14:31 - INFO - number of parameters: 4338030
+2022-06-15 17:14:35 - INFO - training regime: {0: {'optimizer': 'Adam', 'lr': 0.005}, 101: {'lr': 0.001}, 142: {'lr': 0.0005}, 184: {'lr': 0.0001}, 220: {'lr': 1e-05}}
+2022-06-15 17:14:35 - DEBUG - OPTIMIZER - setting method = Adam
+2022-06-15 17:14:35 - DEBUG - OPTIMIZER - setting lr = 0.005

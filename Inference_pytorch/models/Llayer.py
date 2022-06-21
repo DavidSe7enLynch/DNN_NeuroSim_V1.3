@@ -14,7 +14,7 @@ class Llayer(nn.Module):
                                 subArray=args.subArray,ADCprecision=args.ADCprecision,vari=args.vari,t=args.t,v=args.v,detect=args.detect,target=args.target, 
                                 name='FCL_', model = args.model)
         # define weight matrix 
-        weight_matrix = input_matrix = torch.rand(128,128)
+        weight_matrix = torch.rand(128,128)
         self.weight = nn.Parameter(weight_matrix)
     
     def forward(self, x):

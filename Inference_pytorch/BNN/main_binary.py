@@ -33,9 +33,9 @@ parser.add_argument('--results_dir', metavar='RESULTS_DIR', default='./results',
                     help='results dir')
 parser.add_argument('--save', metavar='SAVE', default='',
                     help='saved folder')
-parser.add_argument('--dataset', metavar='DATASET', default='imagenet',
+parser.add_argument('--dataset', metavar='DATASET', default='cifar10',
                     help='dataset name or folder')
-parser.add_argument('--model', '-a', metavar='MODEL', default='alexnet',
+parser.add_argument('--model', '-a', metavar='MODEL', default='vgg_cifar10_binary',
                     choices=model_names,
                     help='model architecture: ' +
                     ' | '.join(model_names) +
@@ -71,6 +71,8 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
 
+# /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-17_17-36-26/model_best.pth.tar
+# /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar
 
 def main():
     global args, best_prec1
@@ -116,6 +118,9 @@ def main():
             parser.error('invalid checkpoint: {}'.format(args.evaluate))
         checkpoint = torch.load(args.evaluate)
         model.load_state_dict(checkpoint['state_dict'])
+        # see model
+        # for param in model.parameters():
+        #     print(param)
         logging.info("loaded checkpoint '%s' (epoch %s)",
                      args.evaluate, checkpoint['epoch'])
     elif args.resume:
@@ -319,6 +324,19 @@ def train(data_loader, model, criterion, epoch, optimizer):
 def validate(data_loader, model, criterion, epoch):
     # switch to evaluate mode
     model.eval()
+    # test accuracy
+    num_correct = 0
+    num_samples = 0
+    with torch.no_grad():
+        for x, y in data_loader:
+            x, y = x.cuda(), y.cuda()
+            print("x\n", x)
+            print("y\n", y)
+            scores = model(x)
+            _, predictions = scores.max(1)
+            num_correct += (predictions == y).sum()
+            num_samples += predictions.size(0)
+    print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples) * 100:.2f}')
     return forward(data_loader, model, criterion, epoch,
                    training=False, optimizer=None)
 

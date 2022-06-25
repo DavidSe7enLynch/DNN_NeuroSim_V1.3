@@ -118,9 +118,6 @@ def main():
             parser.error('invalid checkpoint: {}'.format(args.evaluate))
         checkpoint = torch.load(args.evaluate)
         model.load_state_dict(checkpoint['state_dict'])
-        # see model
-        # for param in model.parameters():
-        #     print(param)
         logging.info("loaded checkpoint '%s' (epoch %s)",
                      args.evaluate, checkpoint['epoch'])
     elif args.resume:
@@ -324,6 +321,9 @@ def train(data_loader, model, criterion, epoch, optimizer):
 def validate(data_loader, model, criterion, epoch):
     # switch to evaluate mode
     model.eval()
+    # see model
+    for param in model.parameters():
+        print(param)
     # test accuracy
     num_correct = 0
     num_samples = 0

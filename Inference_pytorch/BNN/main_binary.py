@@ -70,6 +70,7 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
+parser.add_argument('--hw', type=int, default=0)
 
 # /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-17_17-36-26/model_best.pth.tar
 # /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar
@@ -109,7 +110,7 @@ def main():
     if args.model_config is not '':
         model_config = dict(model_config, **literal_eval(args.model_config))
 
-    model = model(**model_config)
+    model = model(hw=args.hw, **model_config)
     logging.info("created model with configuration: %s", model_config)
 
     # optionally resume from a checkpoint

@@ -8,7 +8,7 @@ from .binarized_modules import  BinarizeLinear,BinarizeConv2d
 
 class VGG_Cifar10(nn.Module):
 
-    def __init__(self, num_classes=1000):
+    def __init__(self, num_classes=1000, hw=0):
         super(VGG_Cifar10, self).__init__()
         self.infl_ratio=3;
         self.features = nn.Sequential(
@@ -46,15 +46,15 @@ class VGG_Cifar10(nn.Module):
 
         )
         self.classifier = nn.Sequential(
-            BinarizeLinear(512 * 4 * 4, 1024, bias=True),
+            BinarizeLinear(512 * 4 * 4, 1024, hw=hw, bias=True),
             nn.BatchNorm1d(1024),
             nn.Hardtanh(inplace=True),
             #nn.Dropout(0.5),
-            BinarizeLinear(1024, 1024, bias=True),
+            BinarizeLinear(1024, 1024, hw=hw, bias=True),
             nn.BatchNorm1d(1024),
             nn.Hardtanh(inplace=True),
             #nn.Dropout(0.5),
-            BinarizeLinear(1024, num_classes, bias=True),
+            BinarizeLinear(1024, num_classes, hw=hw, bias=True),
             nn.BatchNorm1d(num_classes, affine=False),
             nn.LogSoftmax()
         )
@@ -75,6 +75,6 @@ class VGG_Cifar10(nn.Module):
         return x
 
 
-def vgg_cifar10_binary(**kwargs):
+def vgg_cifar10_binary(hw=0, **kwargs):
     num_classes = getattr(kwargs,'num_classes', 10)
-    return VGG_Cifar10(num_classes)
+    return VGG_Cifar10(num_classes, hw)

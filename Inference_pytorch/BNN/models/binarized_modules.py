@@ -79,17 +79,17 @@ def Quantize(tensor, quant_mode='det', params=None, numBits=8):
 
 class BinarizeLinear(nn.Linear):
 
-    def __init__(self, *kargs, **kwargs):
+    def __init__(self, *kargs, hw=0, **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
-        wl_input = 8
-        wl_activate = 8
-        wl_error = 8
+        wl_input = 1
+        # wl_activate = 8
+        # wl_error = 8
         wl_weight = 1
-        inference = 1
+        # inference = 1
         onoffratio = 10
         # cellBit = 1
         subArray = 128
-        ADCprecision = 5
+        # ADCprecision = 5
         vari = 0
         t = 0
         v = 0
@@ -97,14 +97,14 @@ class BinarizeLinear(nn.Linear):
         target = 0
         # is_linear = 1
         self.wl_weight = int(wl_weight)
-        self.wl_activate = int(wl_activate)
-        self.wl_error = int(wl_error)
+        # self.wl_activate = int(wl_activate)
+        # self.wl_error = int(wl_error)
         self.wl_input = int(wl_input)
-        self.inference = inference
+        self.hw = hw
         self.onoffratio = onoffratio
         # self.cellBit = int(cellBit)
         self.subArray = subArray
-        self.ADCprecision = int(ADCprecision)
+        # self.ADCprecision = int(ADCprecision)
         self.vari = vari
         self.t = t
         self.v = v
@@ -216,7 +216,7 @@ class BinarizeLinear(nn.Linear):
             self.weight.org = self.weight.data.clone()
         self.weight.data = Binarize(self.weight.org)
 
-        if self.inference == 0:
+        if self.hw == 0:
             out = nn.functional.linear(input, self.weight)
         else:
             out = self.neurosim_linear()

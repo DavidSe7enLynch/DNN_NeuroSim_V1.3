@@ -30,18 +30,18 @@ parser.add_argument('--test_interval', type=int, default=1, help='how many epoch
 parser.add_argument('--logdir', default='log/default', help='folder to save to the log')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate (default: 1e-3)')
 parser.add_argument('--decreasing_lr', default='140,180', help='decreasing strategy')
-parser.add_argument('--wl_weight', default=8)
+parser.add_argument('--wl_weight', type=int, default=8)
 parser.add_argument('--wl_grad', default=8)
-parser.add_argument('--wl_activate', default=8)
-parser.add_argument('--wl_error', default=8)
+parser.add_argument('--wl_activate', type=int, default=8)
+parser.add_argument('--wl_error', type=int, default=8)
 # parser.add_argument('--cuda', default=0)
 # Hardware Properties
 # if do not consider hardware effects, set inference=0
 parser.add_argument('--inference', default=1, help='run hardware inference simulation')
-parser.add_argument('--subArray', default=128, help='size of subArray (e.g. 128*128)')
-parser.add_argument('--ADCprecision', default=5, help='ADC precision (e.g. 5-bit)')
-parser.add_argument('--cellBit', default=4, help='cell precision (e.g. 4-bit/cell)')
-parser.add_argument('--onoffratio', default=10, help='device on/off ratio (e.g. Gmax/Gmin = 3)')
+parser.add_argument('--subArray', default=128, type=int, help='size of subArray (e.g. 128*128)')
+parser.add_argument('--ADCprecision', default=5, type=int, help='ADC precision (e.g. 5-bit)')
+parser.add_argument('--cellBit', default=4, type=int, help='cell precision (e.g. 4-bit/cell)')
+parser.add_argument('--onoffratio', default=10, type=int, help='device on/off ratio (e.g. Gmax/Gmin = 3)')
 # if do not run the device retention / conductance variation effects, set vari=0, v=0
 parser.add_argument('--vari', default=0.1,
                     help='conductance variation (e.g. 0.1 standard deviation to generate random variation)')
@@ -96,16 +96,16 @@ if args.model == 'VGG8':
     from models import VGG
 
     # model_path = './log/VGG8.pth'  # WAGE mode pretrained model
-    model_path = './log/default/ADCprecision=5/batch_size=64' \
-                 '/cellBit=4/dataset=cifar10/decreasing_lr=140,' \
-                 '180/detect=0/grad_scale=8/inference=0/is_linear=1/lr=0.01/mode=WAGE/model=VGG8/onoffratio=10/seed' \
-                 '=117/subArray=128/t=0/target=0/v=0/vari=0/wl_activate=4/wl_error=8/wl_grad=8/wl_weight=4/best-143' \
-                 '.pth'
     # model_path = './log/default/ADCprecision=5/batch_size=64' \
     #              '/cellBit=4/dataset=cifar10/decreasing_lr=140,' \
     #              '180/detect=0/grad_scale=8/inference=0/is_linear=1/lr=0.01/mode=WAGE/model=VGG8/onoffratio=10/seed' \
-    #              '=117/subArray=128/t=0/target=0/v=0/vari=0/wl_activate=8/wl_error=8/wl_grad=8/wl_weight=8/best-140' \
+    #              '=117/subArray=128/t=0/target=0/v=0/vari=0/wl_activate=4/wl_error=8/wl_grad=8/wl_weight=4/best-143' \
     #              '.pth'
+    model_path = './log/default/ADCprecision=5/batch_size=64' \
+                 '/cellBit=4/dataset=cifar10/decreasing_lr=140,' \
+                 '180/detect=0/grad_scale=8/inference=0/is_linear=1/lr=0.01/mode=WAGE/model=VGG8/onoffratio=10/seed' \
+                 '=117/subArray=128/t=0/target=0/v=0/vari=0/wl_activate=8/wl_error=8/wl_grad=8/wl_weight=8/best-140' \
+                 '.pth'
     modelCF = VGG.vgg8(args=args, logger=logger, pretrained=model_path)
 elif args.model == 'DenseNet40':
     from models import DenseNet
@@ -150,24 +150,24 @@ if args.model == 'Llayer':
 
 else:
     # why loop
-    for data, target in test_loader:
-        for i, (data, target) in enumerate(test_loader):
-            if i == 0:
-                hook_handle_list = hook.hardware_evaluation(modelCF, args.wl_weight, args.wl_activate, args.model,
-                                                            args.mode)
-            indx_target = target.clone()
-            if args.cuda:
-                data, target = data.cuda(), target.cuda()
-            with torch.no_grad():
-                data, target = Variable(data), Variable(target)
-                output = modelCF(data)
-                test_loss_i = criterion(output, target)
-                test_loss += test_loss_i.data
-                pred = output.data.max(1)[1]  # get the index of the max log-probability
-                correct += pred.cpu().eq(indx_target).sum()
-                total_pred += len(pred)
-            if i == 0:
-                hook.remove_hook_list(hook_handle_list)
+    # for data, target in test_loader:
+    for i, (data, target) in enumerate(test_loader):
+        if i == 0:
+            hook_handle_list = hook.hardware_evaluation(modelCF, args.wl_weight, args.wl_activate, args.model,
+                                                        args.mode)
+        indx_target = target.clone()
+        if args.cuda:
+            data, target = data.cuda(), target.cuda()
+        with torch.no_grad():
+            data, target = Variable(data), Variable(target)
+            output = modelCF(data)
+            test_loss_i = criterion(output, target)
+            test_loss += test_loss_i.data
+            pred = output.data.max(1)[1]  # get the index of the max log-probability
+            correct += pred.cpu().eq(indx_target).sum()
+            total_pred += len(pred)
+        if i == 0:
+            hook.remove_hook_list(hook_handle_list)
 
     test_loss = test_loss / len(test_loader)  # average over number of mini-batch
     # print("type of test_loss is " + str(type(test_loss)) + ", test_loss " + str(test_loss))

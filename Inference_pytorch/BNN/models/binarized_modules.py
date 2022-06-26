@@ -96,10 +96,10 @@ class BinarizeLinear(nn.Linear):
         detect = 0
         target = 0
         # is_linear = 1
-        self.wl_weight = int(wl_weight)
+        self.wl_weight = wl_weight
         # self.wl_activate = int(wl_activate)
         # self.wl_error = int(wl_error)
-        self.wl_input = int(wl_input)
+        self.wl_input = wl_input
         self.hw = hw
         self.onoffratio = onoffratio
         # self.cellBit = int(cellBit)
@@ -117,7 +117,7 @@ class BinarizeLinear(nn.Linear):
     # so self.weight must be already binary
     # so no need to transform weight
     # only need to transform input into bit stream
-    def neurosim_linear(self):
+    def neurosim_linear(self, input):
         outputOriginal = nn.functional.linear(input, self.weight)
         # set parameters for Hardware Inference
         upper = 1
@@ -171,9 +171,10 @@ class BinarizeLinear(nn.Linear):
                 # remainderQ = (upper - lower) * (remainder - 0) + (
                 #         cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
                 remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
-                remainderQ = remainderQ + remainderQ * torch.normal(0.,
-                                                                    torch.full(remainderQ.size(), self.vari,
-                                                                               device='cuda'))
+                # remainderQ = remainderQ + remainderQ * torch.normal(0.,
+                #                                                     torch.full(remainderQ.size(), self.vari,
+                #                                                                device='cuda'))
+
                 outputPartial = nn.functional.linear(inputB, remainderQ * mask, self.bias)
                 outputDummyPartial = nn.functional.linear(inputB, dummyP * mask, self.bias)
                 # Add ADC quanization effects here !!!
@@ -206,6 +207,9 @@ class BinarizeLinear(nn.Linear):
             outputIN = outputIN + outputP * scalerIN
             output = output + outputIN / (2 ** self.wl_input)
         output = output / (2 ** self.wl_weight)
+        print("neurosim_linear finished")
+        print("original output\n", outputOriginal)
+        print("neuro_output\n", output)
         return output
 
     def forward(self, input):
@@ -219,7 +223,7 @@ class BinarizeLinear(nn.Linear):
         if self.hw == 0:
             out = nn.functional.linear(input, self.weight)
         else:
-            out = self.neurosim_linear()
+            out = self.neurosim_linear(input)
 
         if not self.bias is None:
             self.bias.org = self.bias.data.clone()
@@ -230,9 +234,195 @@ class BinarizeLinear(nn.Linear):
 
 class BinarizeConv2d(nn.Conv2d):
 
-    def __init__(self, *kargs, **kwargs):
+    def __init__(self, *kargs, hw=0, **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
+        wl_input = 1
+        wl_weight = 1
+        onoffratio = 10
+        subArray = 128
+        vari = 0
+        t = 0
+        v = 0
+        detect = 0
+        target = 0
+        self.wl_weight = wl_weight
+        self.wl_input = wl_input
+        self.hw = hw
+        self.onoffratio = onoffratio
+        self.subArray = subArray
+        self.vari = vari
+        self.t = t
+        self.v = v
+        self.detect = detect
+        self.target = target
 
+    def neurosim_conv2d(self, input):
+        outputOriginal = nn.functional.conv2d(input, self.weight, None, self.stride,
+                                   self.padding, self.dilation, self.groups)
+        # set parameters for Hardware Inference
+        onoffratio = self.onoffratio
+        upper = 1
+        lower = 1 / onoffratio
+
+        output = torch.zeros_like(outputOriginal)
+        del outputOriginal
+        # cellRange = 2 ** self.cellBit  # cell precision is 4
+
+        # Now consider on/off ratio
+        dummyP = torch.zeros_like(self.weight)
+        # dummyP[:, :, :, :] = (cellRange - 1) * (upper + lower) / 2
+        dummyP[:, :, :, :] = 1 * (upper + lower) / 2
+
+        for i in range(self.weight.shape[2]):
+            for j in range(self.weight.shape[3]):
+                # need to divide to different subArray
+                numSubArray = int(self.weight.shape[1] / self.subArray)
+                # cut into different subArrays
+                if numSubArray == 0:
+                    mask = torch.zeros_like(self.weight)
+                    mask[:, :, i, j] = 1
+                    if self.weight.shape[1] == 3:
+                        # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
+                        X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
+                        outputP = torch.zeros_like(output)
+                        outputD = torch.zeros_like(output)
+                        for k in range(int(self.wl_weight / self.cellBit)):
+                            remainder = torch.fmod(X_decimal, cellRange) * mask
+                            # retention
+                            remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect,
+                                                                 self.target)
+                            X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+                            # Now also consider weight has on/off ratio effects
+                            # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+                            # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]
+                            remainderQ = (upper - lower) * (remainder - 0) + (
+                                    cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+                            remainderQ = remainderQ + remainderQ * torch.normal(0., torch.full(remainderQ.size(),
+                                                                                               self.vari,
+                                                                                               device='cuda'))
+                            outputPartial = F.conv2d(input, remainderQ * mask, self.bias, self.stride, self.padding,
+                                                     self.dilation, self.groups)
+                            outputDummyPartial = F.conv2d(input, dummyP * mask, self.bias, self.stride,
+                                                          self.padding, self.dilation, self.groups)
+                            scaler = cellRange ** k
+                            outputP = outputP + outputPartial * scaler * 2 / (1 - 1 / onoffratio)
+                            outputD = outputD + outputDummyPartial * scaler * 2 / (1 - 1 / onoffratio)
+                        outputP = outputP - outputD
+                        output = output + outputP
+                    else:
+                        # quantize input into binary sequence
+                        inputQ = torch.round((2 ** self.wl_input - 1) / 1 * (input - 0) + 0)
+                        outputIN = torch.zeros_like(output)
+                        for z in range(self.wl_input):
+                            inputB = torch.fmod(inputQ, 2)
+                            inputQ = torch.round((inputQ - inputB) / 2)
+                            outputP = torch.zeros_like(output)
+                            # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
+                            X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
+                            outputD = torch.zeros_like(output)
+                            for k in range(int(self.wl_weight / self.cellBit)):
+                                remainder = torch.fmod(X_decimal, cellRange) * mask
+                                # retention
+                                remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect,
+                                                                     self.target)
+                                X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+                                # Now also consider weight has on/off ratio effects
+                                # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+                                # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]
+                                remainderQ = (upper - lower) * (remainder - 0) + (
+                                        cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+                                remainderQ = remainderQ + remainderQ * torch.normal(0.,
+                                                                                    torch.full(remainderQ.size(),
+                                                                                               self.vari,
+                                                                                               device='cuda'))
+                                outputPartial = F.conv2d(inputB, remainderQ * mask, self.bias, self.stride,
+                                                         self.padding, self.dilation, self.groups)
+                                outputDummyPartial = F.conv2d(inputB, dummyP * mask, self.bias, self.stride,
+                                                              self.padding, self.dilation, self.groups)
+                                # Add ADC quanization effects here !!!
+
+                                # choose one from these two: linear or non-linear
+                                if self.is_linear == 1:
+                                    # linear quantization
+                                    outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+                                                                                      self.ADCprecision)
+                                    outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+                                                                                           self.ADCprecision)
+                                else:
+                                    # non-linear quantization
+                                    # print("calling nonlinear")
+                                    outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+                                                                                         self.ADCprecision)
+                                    outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+                                                                                              self.ADCprecision)
+
+                                scaler = cellRange ** k
+                                outputP = outputP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                                outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            scalerIN = 2 ** z
+                            outputIN = outputIN + (outputP - outputD) * scalerIN
+                        output = output + outputIN / (2 ** self.wl_input)
+                else:
+                    # quantize input into binary sequence
+                    inputQ = torch.round((2 ** self.wl_input - 1) / 1 * (input - 0) + 0)
+                    outputIN = torch.zeros_like(output)
+                    for z in range(self.wl_input):
+                        inputB = torch.fmod(inputQ, 2)
+                        inputQ = torch.round((inputQ - inputB) / 2)
+                        outputP = torch.zeros_like(output)
+                        for s in range(numSubArray):
+                            mask = torch.zeros_like(self.weight)
+                            mask[:, (s * self.subArray):(s + 1) * self.subArray, i, j] = 1
+                            # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
+                            X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
+                            outputSP = torch.zeros_like(output)
+                            outputD = torch.zeros_like(output)
+                            for k in range(int(self.wl_weight / self.cellBit)):
+                                remainder = torch.fmod(X_decimal, cellRange) * mask
+                                # retention
+                                remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect,
+                                                                     self.target)
+                                X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+                                # Now also consider weight has on/off ratio effects
+                                # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+                                # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]*(cellRange-1)
+                                remainderQ = (upper - lower) * (remainder - 0) + (
+                                        cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+                                remainderQ = remainderQ + remainderQ * torch.normal(0.,
+                                                                                    torch.full(remainderQ.size(),
+                                                                                               self.vari,
+                                                                                               device='cuda'))
+                                outputPartial = F.conv2d(inputB, remainderQ * mask, self.bias, self.stride,
+                                                         self.padding, self.dilation, self.groups)
+                                outputDummyPartial = F.conv2d(inputB, dummyP * mask, self.bias, self.stride,
+                                                              self.padding, self.dilation, self.groups)
+                                # Add ADC quanization effects here !!!
+
+                                # choose one from these two: linear or non-linear
+                                if self.is_linear == 1:
+                                    # linear quantization
+                                    outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+                                                                                      self.ADCprecision)
+                                    outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+                                                                                           self.ADCprecision)
+                                else:
+                                    # non-linear quantization
+                                    # print("calling nonlinear")
+                                    outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+                                                                                         self.ADCprecision)
+                                    outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+                                                                                              self.ADCprecision)
+
+                                scaler = cellRange ** k
+                                outputSP = outputSP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                                outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            # !!! Important !!! the dummy need to be multiplied by a ratio
+                            outputSP = outputSP - outputD  # minus dummy column
+                            outputP = outputP + outputSP
+                        scalerIN = 2 ** z
+                        outputIN = outputIN + outputP * scalerIN
+                    output = output + outputIN / (2 ** self.wl_input)
+        output = output / (2 ** self.wl_weight)  # since weight range was convert from [-1, 1] to [-256, 256]
 
     def forward(self, input):
         if input.size(1) != 3:

@@ -12,7 +12,7 @@ from torch.autograd import Function
 # # from modules.quantization_cpu_np_infer import QConv2d, QLinear
 # from utee import wage_quantizer
 
-from . import wage_quantizer
+from . import wage_quantizer, wage_initializer
 
 import numpy as np
 
@@ -81,149 +81,323 @@ class BinarizeLinear(nn.Linear):
 
     def __init__(self, *kargs, hw=0, **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
-        wl_input = 1
-        # wl_activate = 8
-        # wl_error = 8
+        wl_input = 4
+        wl_activate = 4
+        wl_error = 4
         wl_weight = 1
         # inference = 1
         onoffratio = 10
-        # cellBit = 1
+        cellBit = 1
         subArray = 128
-        # ADCprecision = 5
+        ADCprecision = 5
         vari = 0
         t = 0
         v = 0
         detect = 0
         target = 0
-        # is_linear = 1
+        is_linear = 1
         self.wl_weight = wl_weight
-        # self.wl_activate = int(wl_activate)
-        # self.wl_error = int(wl_error)
+        self.wl_activate = wl_activate
+        self.wl_error = wl_error
         self.wl_input = wl_input
         self.hw = hw
         self.onoffratio = onoffratio
-        # self.cellBit = int(cellBit)
+        self.cellBit = cellBit
         self.subArray = subArray
-        # self.ADCprecision = int(ADCprecision)
+        self.ADCprecision = ADCprecision
         self.vari = vari
         self.t = t
         self.v = v
         self.detect = detect
         self.target = target
-        # self.is_linear = is_linear
+        self.is_linear = is_linear
+        self.scale = wage_initializer.wage_init_(self.weight, self.wl_weight, factor=1.0)
 
     # hardware effect simulation
     # used only when inferencing
     # so self.weight must be already binary
     # so no need to transform weight
     # only need to transform input into bit stream
-    def neurosim_linear(self, input):
-        outputOriginal = nn.functional.linear(input, self.weight)
+    def neurosim_linear(self, input, is_input_bin):
+        # outputOriginal = nn.functional.linear(input, self.weight)
+        # # set parameters for Hardware Inference
+        # upper = 1
+        # lower = 1 / self.onoffratio
+        # output = torch.zeros_like(outputOriginal)
+        # # cellRange = 2 ** self.cellBit  # cell precision is 4
+        # # Now consider on/off ratio
+        # dummyP = torch.zeros_like(self.weight)
+        # # dummyP[:, :] = (cellRange - 1) * (upper + lower) / 2
+        # dummyP[:, :] = 1 * (upper + lower) / 2
+        #
+        # # cells per weight
+        # # numCell = int(self.wl_weight / self.cellBit)  # in BNN, numCell shall be 1
+        # # if self.wl_weight % self.cellBit != 0:
+        # #     numCell += 1
+        #
+        # # need to divide to different subArray
+        # numSubArray = int(self.weight.shape[1] / self.subArray)
+        # if self.weight.shape[1] % self.subArray != 0:
+        #     numSubArray += 1
+        #
+        # inputQ = torch.round((2 ** self.wl_input - 1) / 1 * (input - 0) + 0)
+        # outputIN = torch.zeros_like(outputOriginal)
+        # for z in range(self.wl_input):
+        #     inputB = torch.fmod(inputQ, 2)
+        #     inputQ = torch.round((inputQ - inputB) / 2)
+        #     outputP = torch.zeros_like(outputOriginal)
+        #     for s in range(numSubArray):
+        #         mask = torch.zeros_like(self.weight)
+        #
+        #         if s == numSubArray - 1:
+        #             # last subArray
+        #             # cannot go beyond size of weight
+        #             mask[:, (s * self.subArray):] = 1
+        #         else:
+        #             mask[:, (s * self.subArray):((s + 1) * self.subArray)] = 1
+        #
+        #         # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
+        #         X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
+        #         outputSP = torch.zeros_like(outputOriginal)
+        #         outputD = torch.zeros_like(outputOriginal)
+        #         # for k in range(numCell):
+        #         # remainder = torch.fmod(X_decimal, cellRange) * mask
+        #         # retention
+        #         remainder = wage_quantizer.Retention(X_decimal, self.t, self.v, self.detect, self.target)
+        #         # X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+        #         # Now also consider weight has on/off ratio effects
+        #         # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+        #         # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]*(cellRange-1)
+        #         # remainderQ = (upper - lower) * (remainder - 0) + (
+        #         #         cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+        #         remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
+        #         # remainderQ = remainderQ + remainderQ * torch.normal(0.,
+        #         #                                                     torch.full(remainderQ.size(), self.vari,
+        #         #                                                                device='cuda'))
+        #
+        #         outputPartial = nn.functional.linear(inputB, remainderQ * mask, self.bias)
+        #         outputDummyPartial = nn.functional.linear(inputB, dummyP * mask, self.bias)
+        #         # Add ADC quanization effects here !!!
+        #
+        #         # BNN doesn't need this step
+        #         # # choose one from these two: linear or non-linear
+        #         # if self.is_linear == 1:
+        #         #     # linear quantization
+        #         #     outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+        #         #                                                       self.ADCprecision)
+        #         #     outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+        #         #                                                            self.ADCprecision)
+        #         # else:
+        #         #     # non-linear quantization
+        #         #     # print("calling nonlinear")
+        #         #     outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+        #         #                                                          self.ADCprecision)
+        #         #     outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+        #         #                                                               self.ADCprecision)
+        #
+        #         # scaler = cellRange ** k
+        #         # outputSP = outputSP + outputPartialQ * scaler * 2 / (1 - 1 / self.onoffratio)
+        #         # outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / self.onoffratio)
+        #         outputSP = outputSP + outputPartial * 1 * 2 / (1 - 1 / self.onoffratio)
+        #         outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / self.onoffratio)
+        #
+        #         outputSP = outputSP - outputD  # minus dummy column
+        #         outputP = outputP + outputSP
+        #     scalerIN = 2 ** z
+        #     outputIN = outputIN + outputP * scalerIN
+        #     output = output + outputIN / (2 ** self.wl_input)
+        # output = output / (2 ** self.wl_weight)
+        # # print("neurosim_linear finished")
+        # # print("original output\n", outputOriginal)
+        # # print("neuro_output\n", output)
+        # return output
+
+
+        # copy from quant
+        weight1 = self.weight * self.scale + (self.weight - self.weight * self.scale).detach()
+        weight = weight1 + (wage_quantizer.Q(weight1, self.wl_weight) - weight1).detach()
+        outputOrignal = nn.functional.linear(input, weight, self.bias)
+        output = torch.zeros_like(outputOrignal)
+
+        bitWeight = int(self.wl_weight)
+        bitActivation = int(self.wl_input)
+        print("bitActivation: ", bitActivation)
+        print("numcell: ", int(bitWeight / self.cellBit))
+
+        # if self.inference == 1 and self.model == 'VGG8':
         # set parameters for Hardware Inference
+        onoffratio = self.onoffratio
         upper = 1
-        lower = 1 / self.onoffratio
-        output = torch.zeros_like(outputOriginal)
-        # cellRange = 2 ** self.cellBit  # cell precision is 4
+        lower = 1 / onoffratio
+        output = torch.zeros_like(outputOrignal)
+        cellRange = 2 ** self.cellBit  # cell precision is 4
         # Now consider on/off ratio
-        dummyP = torch.zeros_like(self.weight)
-        # dummyP[:, :] = (cellRange - 1) * (upper + lower) / 2
-        dummyP[:, :] = 1 * (upper + lower) / 2
-
-        # cells per weight
-        # numCell = int(self.wl_weight / self.cellBit)  # in BNN, numCell shall be 1
-        # if self.wl_weight % self.cellBit != 0:
-        #     numCell += 1
-
+        dummyP = torch.zeros_like(weight)
+        dummyP[:, :] = (cellRange - 1) * (upper + lower) / 2
         # need to divide to different subArray
-        numSubArray = int(self.weight.shape[1] / self.subArray)
-        if self.weight.shape[1] % self.subArray != 0:
-            numSubArray += 1
+        numSubArray = int(weight.shape[1] / self.subArray)
 
-        inputQ = torch.round((2 ** self.wl_input - 1) / 1 * (input - 0) + 0)
-        outputIN = torch.zeros_like(outputOriginal)
-        for z in range(self.wl_input):
+        # if numSubArray == 0:
+        #     print("inside numSubArray = 0")
+        #     mask = torch.zeros_like(weight)
+        #     mask[:, :] = 1
+        #     # quantize input into binary sequence
+        #     inputQ = torch.round((2 ** bitActivation - 1) / 1 * (input - 0) + 0)
+        #     outputIN = torch.zeros_like(outputOrignal)
+        #     for z in range(bitActivation):
+        #         inputB = torch.fmod(inputQ, 2)
+        #         inputQ = torch.round((inputQ - inputB) / 2)
+        #         # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
+        #         X_decimal = torch.round((2 ** bitWeight - 1) / 2 * (weight + 1) + 0) * mask
+        #         outputP = torch.zeros_like(outputOrignal)
+        #         outputD = torch.zeros_like(outputOrignal)
+        #         for k in range(int(bitWeight / self.cellBit)):
+        #             remainder = torch.fmod(X_decimal, cellRange) * mask
+        #             # retention
+        #             remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect, self.target)
+        #             X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+        #             # Now also consider weight has on/off ratio effects
+        #             # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+        #             # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]
+        #             remainderQ = (upper - lower) * (remainder - 0) + (
+        #                     cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+        #             # remainderQ = remainderQ + remainderQ * torch.normal(0., torch.full(remainderQ.size(), self.vari,
+        #             #                                                                    device='cuda'))
+        #             outputPartial = nn.functional.linear(inputB, remainderQ * mask, self.bias)
+        #             outputDummyPartial = nn.functional.linear(inputB, dummyP * mask, self.bias)
+        #             # Add ADC quanization effects here !!!
+        #
+        #             # choose one from these two: linear or non-linear
+        #             if self.is_linear == 1:
+        #                 # linear quantization
+        #                 outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+        #                                                                   self.ADCprecision)
+        #                 outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+        #                                                                        self.ADCprecision)
+        #             else:
+        #                 # non-linear quantization
+        #                 # print("calling nonlinear")
+        #                 outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+        #                                                                      self.ADCprecision)
+        #                 outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+        #                                                                           self.ADCprecision)
+        #
+        #             scaler = cellRange ** k
+        #             outputP = outputP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+        #             outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+        #         scalerIN = 2 ** z
+        #         outputIN = outputIN + (outputP - outputD) * scalerIN
+        #     output = output + outputIN / (2 ** bitActivation)
+        # else:
+        #     print("inside numSubArray != 0")
+        inputQ = torch.round((2 ** bitActivation - 1) / 1 * (input - 0) + 0)
+        outputIN = torch.zeros_like(outputOrignal)
+        for z in range(bitActivation):
             inputB = torch.fmod(inputQ, 2)
             inputQ = torch.round((inputQ - inputB) / 2)
-            outputP = torch.zeros_like(outputOriginal)
+            outputP = torch.zeros_like(outputOrignal)
             for s in range(numSubArray):
-                mask = torch.zeros_like(self.weight)
-
-                if s == numSubArray - 1:
-                    # last subArray
-                    # cannot go beyond size of weight
-                    mask[:, (s * self.subArray):] = 1
-                else:
-                    mask[:, (s * self.subArray):((s + 1) * self.subArray)] = 1
-
+                mask = torch.zeros_like(weight)
+                mask[:, (s * self.subArray):(s + 1) * self.subArray] = 1
                 # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
-                X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
-                outputSP = torch.zeros_like(outputOriginal)
-                outputD = torch.zeros_like(outputOriginal)
-                # for k in range(numCell):
-                # remainder = torch.fmod(X_decimal, cellRange) * mask
-                remainder = X_decimal * mask
-                # retention
-                remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect, self.target)
-                # X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
-                # Now also consider weight has on/off ratio effects
-                # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
-                # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]*(cellRange-1)
-                # remainderQ = (upper - lower) * (remainder - 0) + (
-                #         cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
-                remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
-                # remainderQ = remainderQ + remainderQ * torch.normal(0.,
-                #                                                     torch.full(remainderQ.size(), self.vari,
-                #                                                                device='cuda'))
+                X_decimal = torch.round((2 ** bitWeight - 1) / 2 * (weight + 1) + 0) * mask
+                outputSP = torch.zeros_like(outputOrignal)
+                outputD = torch.zeros_like(outputOrignal)
+                for k in range(int(bitWeight / self.cellBit)):
+                    remainder = torch.fmod(X_decimal, cellRange) * mask
+                    # retention
+                    remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect, self.target)
+                    X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+                    # Now also consider weight has on/off ratio effects
+                    # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+                    # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]*(cellRange-1)
+                    remainderQ = (upper - lower) * (remainder - 0) + (
+                            cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+                    # remainderQ = remainderQ + remainderQ * torch.normal(0.,
+                    #                                                     torch.full(remainderQ.size(), self.vari,
+                    #                                                                device='cuda'))
+                    outputPartial = nn.functional.linear(inputB, remainderQ * mask, self.bias)
+                    outputDummyPartial = nn.functional.linear(inputB, dummyP * mask, self.bias)
+                    # Add ADC quanization effects here !!!
 
-                outputPartial = nn.functional.linear(inputB, remainderQ * mask, self.bias)
-                outputDummyPartial = nn.functional.linear(inputB, dummyP * mask, self.bias)
-                # Add ADC quanization effects here !!!
+                    # choose one from these two: linear or non-linear
+                    if self.is_linear == 1:
+                        # linear quantization
+                        outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+                                                                          self.ADCprecision)
+                        outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+                                                                               self.ADCprecision)
+                    else:
+                        # non-linear quantization
+                        # print("calling nonlinear")
+                        outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+                                                                             self.ADCprecision)
+                        outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+                                                                                  self.ADCprecision)
 
-                # BNN doesn't need this step
-                # # choose one from these two: linear or non-linear
-                # if self.is_linear == 1:
-                #     # linear quantization
-                #     outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
-                #                                                       self.ADCprecision)
-                #     outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
-                #                                                            self.ADCprecision)
-                # else:
-                #     # non-linear quantization
-                #     # print("calling nonlinear")
-                #     outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
-                #                                                          self.ADCprecision)
-                #     outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
-                #                                                               self.ADCprecision)
-
-                # scaler = cellRange ** k
-                # outputSP = outputSP + outputPartialQ * scaler * 2 / (1 - 1 / self.onoffratio)
-                # outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / self.onoffratio)
-                outputSP = outputSP + outputPartial * 1 * 2 / (1 - 1 / self.onoffratio)
-                outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / self.onoffratio)
-
+                    scaler = cellRange ** k
+                    outputSP = outputSP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                    outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
                 outputSP = outputSP - outputD  # minus dummy column
                 outputP = outputP + outputSP
             scalerIN = 2 ** z
             outputIN = outputIN + outputP * scalerIN
-            output = output + outputIN / (2 ** self.wl_input)
-        output = output / (2 ** self.wl_weight)
-        print("neurosim_linear finished")
-        print("original output\n", outputOriginal)
-        print("neuro_output\n", output)
+        output = output + outputIN / (2 ** bitActivation)
+
+        output = output / (2 ** bitWeight)
+
+        # elif self.inference == 1:
+        #     weight1 = self.weight * self.scale + (self.weight - self.weight * self.scale).detach()
+        #     weight = weight1 + (wage_quantizer.Q(weight1, self.wl_weight) - weight1).detach()
+        #     weight = wage_quantizer.Retention(weight, self.t, self.v, self.detect, self.target)
+        #     input = wage_quantizer.Q(input, self.wl_input)
+        #     output = nn.functional.linear(input, weight, self.bias)
+        #
+        #     # choose one from these two: linear or non-linear
+        #     if self.is_linear == 1:
+        #         # linear quantization
+        #         output = wage_quantizer.LinearQuantizeOut(output, self.ADCprecision)
+        #     else:
+        #         # non-linear quantization
+        #         # print("calling non-linear")
+        #         output = wage_quantizer.NonLinearQuantizeOut(output, self.ADCprecision)
+        # else:
+        #     # original WAGE QCov2d
+        #     weight1 = self.weight * self.scale + (self.weight - self.weight * self.scale).detach()
+        #     weight = weight1 + (wage_quantizer.Q(weight1, self.wl_weight) - weight1).detach()
+        #     weight = wage_quantizer.Retention(weight, self.t, self.v, self.detect, self.target)
+        #     output = nn.functional.linear(input, weight, self.bias)
+        # print("before scale output: ", output)
+        # print(self.scale)
+        # output = output / self.scale
+        # output = wage_quantizer.WAGEQuantizer_f(output, self.wl_activate, self.wl_error)
+        output = output * 2
+
         return output
 
     def forward(self, input):
-
+        is_input_bin = 0
+        # print("initial input: ", input)
+        # print("initial weight: ", self.weight)
         if input.size(1) != 784:
+            is_input_bin = 1
             input.data = Binarize(input.data)
         if not hasattr(self.weight, 'org'):
             self.weight.org = self.weight.data.clone()
         self.weight.data = Binarize(self.weight.org)
 
+        print("linear: is_input_bin = ", is_input_bin)
+        # print("bin weight: ", self.weight)
+
+        self.hw = 1
         if self.hw == 0:
             out = nn.functional.linear(input, self.weight)
+            print("linear finished")
         else:
-            out = self.neurosim_linear(input)
+            out = self.neurosim_linear(input, is_input_bin)
+            print("nuerosim_linear finished: ", out)
+            print("linear out:", nn.functional.linear(input, self.weight))
+            # print("after weight: ", self.weight)
 
         if not self.bias is None:
             self.bias.org = self.bias.data.clone()
@@ -234,9 +408,9 @@ class BinarizeLinear(nn.Linear):
 
 class BinarizeConv2d(nn.Conv2d):
 
-    def __init__(self, *kargs, hw=0, **kwargs):
+    def __init__(self, *kargs, hw=1, **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
-        wl_input = 1
+        wl_input = 4
         wl_weight = 1
         onoffratio = 10
         subArray = 128
@@ -286,27 +460,31 @@ class BinarizeConv2d(nn.Conv2d):
                         X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
                         outputP = torch.zeros_like(output)
                         outputD = torch.zeros_like(output)
-                        for k in range(int(self.wl_weight / self.cellBit)):
-                            remainder = torch.fmod(X_decimal, cellRange) * mask
-                            # retention
-                            remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect,
-                                                                 self.target)
-                            X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
-                            # Now also consider weight has on/off ratio effects
-                            # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
-                            # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]
-                            remainderQ = (upper - lower) * (remainder - 0) + (
-                                    cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
-                            remainderQ = remainderQ + remainderQ * torch.normal(0., torch.full(remainderQ.size(),
-                                                                                               self.vari,
-                                                                                               device='cuda'))
-                            outputPartial = F.conv2d(input, remainderQ * mask, self.bias, self.stride, self.padding,
-                                                     self.dilation, self.groups)
-                            outputDummyPartial = F.conv2d(input, dummyP * mask, self.bias, self.stride,
-                                                          self.padding, self.dilation, self.groups)
-                            scaler = cellRange ** k
-                            outputP = outputP + outputPartial * scaler * 2 / (1 - 1 / onoffratio)
-                            outputD = outputD + outputDummyPartial * scaler * 2 / (1 - 1 / onoffratio)
+                        # for k in range(int(self.wl_weight / self.cellBit)):
+                        # remainder = torch.fmod(X_decimal, cellRange) * mask
+                        # retention
+                        remainder = wage_quantizer.Retention(X_decimal, self.t, self.v, self.detect,
+                                                             self.target)
+                        # X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+                        # Now also consider weight has on/off ratio effects
+                        # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+                        # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]
+                        # remainderQ = (upper - lower) * (remainder - 0) + (
+                        #         cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+                        remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
+                        # remainderQ = remainderQ + remainderQ * torch.normal(0., torch.full(remainderQ.size(),
+                        #                                                                    self.vari,
+                        #                                                                    device='cuda'))
+                        outputPartial = nn.functional.conv2d(input, remainderQ * mask, self.bias, self.stride, self.padding,
+                                                 self.dilation, self.groups)
+                        outputDummyPartial = nn.functional.conv2d(input, dummyP * mask, self.bias, self.stride,
+                                                      self.padding, self.dilation, self.groups)
+                        # scaler = cellRange ** k
+                        # outputP = outputP + outputPartial * scaler * 2 / (1 - 1 / onoffratio)
+                        # outputD = outputD + outputDummyPartial * scaler * 2 / (1 - 1 / onoffratio)
+                        outputP = outputP + outputPartial * 1 * 2 / (1 - 1 / self.onoffratio)
+                        outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / self.onoffratio)
+
                         outputP = outputP - outputD
                         output = output + outputP
                     else:
@@ -320,45 +498,49 @@ class BinarizeConv2d(nn.Conv2d):
                             # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
                             X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
                             outputD = torch.zeros_like(output)
-                            for k in range(int(self.wl_weight / self.cellBit)):
-                                remainder = torch.fmod(X_decimal, cellRange) * mask
-                                # retention
-                                remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect,
-                                                                     self.target)
-                                X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
-                                # Now also consider weight has on/off ratio effects
-                                # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
-                                # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]
-                                remainderQ = (upper - lower) * (remainder - 0) + (
-                                        cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
-                                remainderQ = remainderQ + remainderQ * torch.normal(0.,
-                                                                                    torch.full(remainderQ.size(),
-                                                                                               self.vari,
-                                                                                               device='cuda'))
-                                outputPartial = F.conv2d(inputB, remainderQ * mask, self.bias, self.stride,
-                                                         self.padding, self.dilation, self.groups)
-                                outputDummyPartial = F.conv2d(inputB, dummyP * mask, self.bias, self.stride,
-                                                              self.padding, self.dilation, self.groups)
-                                # Add ADC quanization effects here !!!
+                            # for k in range(int(self.wl_weight / self.cellBit)):
+                            # remainder = torch.fmod(X_decimal, cellRange) * mask
+                            # retention
+                            remainder = wage_quantizer.Retention(X_decimal, self.t, self.v, self.detect,
+                                                                 self.target)
+                            # X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+                            # Now also consider weight has on/off ratio effects
+                            # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+                            # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]
+                            # remainderQ = (upper - lower) * (remainder - 0) + (
+                            #         cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+                            remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
+                            # remainderQ = remainderQ + remainderQ * torch.normal(0.,
+                            #                                                     torch.full(remainderQ.size(),
+                            #                                                                self.vari,
+                            #                                                                device='cuda'))
+                            outputPartial = nn.functional.conv2d(inputB, remainderQ * mask, self.bias, self.stride,
+                                                     self.padding, self.dilation, self.groups)
+                            outputDummyPartial = nn.functional.conv2d(inputB, dummyP * mask, self.bias, self.stride,
+                                                          self.padding, self.dilation, self.groups)
+                            # Add ADC quanization effects here !!!
 
-                                # choose one from these two: linear or non-linear
-                                if self.is_linear == 1:
-                                    # linear quantization
-                                    outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
-                                                                                      self.ADCprecision)
-                                    outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
-                                                                                           self.ADCprecision)
-                                else:
-                                    # non-linear quantization
-                                    # print("calling nonlinear")
-                                    outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
-                                                                                         self.ADCprecision)
-                                    outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
-                                                                                              self.ADCprecision)
+                            # choose one from these two: linear or non-linear
+                            # if self.is_linear == 1:
+                            #     # linear quantization
+                            #     outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+                            #                                                       self.ADCprecision)
+                            #     outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+                            #                                                            self.ADCprecision)
+                            # else:
+                            #     # non-linear quantization
+                            #     # print("calling nonlinear")
+                            #     outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+                            #                                                          self.ADCprecision)
+                            #     outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+                            #                                                               self.ADCprecision)
 
-                                scaler = cellRange ** k
-                                outputP = outputP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
-                                outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            # scaler = cellRange ** k
+                            # outputP = outputP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            # outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            outputP = outputP + outputPartial * 1 * 2 / (1 - 1 / self.onoffratio)
+                            outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / self.onoffratio)
+
                             scalerIN = 2 ** z
                             outputIN = outputIN + (outputP - outputD) * scalerIN
                         output = output + outputIN / (2 ** self.wl_input)
@@ -377,62 +559,79 @@ class BinarizeConv2d(nn.Conv2d):
                             X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
                             outputSP = torch.zeros_like(output)
                             outputD = torch.zeros_like(output)
-                            for k in range(int(self.wl_weight / self.cellBit)):
-                                remainder = torch.fmod(X_decimal, cellRange) * mask
-                                # retention
-                                remainder = wage_quantizer.Retention(remainder, self.t, self.v, self.detect,
-                                                                     self.target)
-                                X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
-                                # Now also consider weight has on/off ratio effects
-                                # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
-                                # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]*(cellRange-1)
-                                remainderQ = (upper - lower) * (remainder - 0) + (
-                                        cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
-                                remainderQ = remainderQ + remainderQ * torch.normal(0.,
-                                                                                    torch.full(remainderQ.size(),
-                                                                                               self.vari,
-                                                                                               device='cuda'))
-                                outputPartial = F.conv2d(inputB, remainderQ * mask, self.bias, self.stride,
-                                                         self.padding, self.dilation, self.groups)
-                                outputDummyPartial = F.conv2d(inputB, dummyP * mask, self.bias, self.stride,
-                                                              self.padding, self.dilation, self.groups)
-                                # Add ADC quanization effects here !!!
+                            # for k in range(int(self.wl_weight / self.cellBit)):
+                            # remainder = torch.fmod(X_decimal, cellRange) * mask
+                            # retention
+                            remainder = wage_quantizer.Retention(X_decimal, self.t, self.v, self.detect,
+                                                                 self.target)
+                            # X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
+                            # Now also consider weight has on/off ratio effects
+                            # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
+                            # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]*(cellRange-1)
+                            # remainderQ = (upper - lower) * (remainder - 0) + (
+                            #         cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
+                            remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
+                            # remainderQ = remainderQ + remainderQ * torch.normal(0.,
+                            #                                                     torch.full(remainderQ.size(),
+                            #                                                                self.vari,
+                            #                                                                device='cuda'))
+                            outputPartial = nn.functional.conv2d(inputB, remainderQ * mask, self.bias, self.stride,
+                                                     self.padding, self.dilation, self.groups)
+                            outputDummyPartial = nn.functional.conv2d(inputB, dummyP * mask, self.bias, self.stride,
+                                                          self.padding, self.dilation, self.groups)
+                            # Add ADC quanization effects here !!!
 
-                                # choose one from these two: linear or non-linear
-                                if self.is_linear == 1:
-                                    # linear quantization
-                                    outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
-                                                                                      self.ADCprecision)
-                                    outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
-                                                                                           self.ADCprecision)
-                                else:
-                                    # non-linear quantization
-                                    # print("calling nonlinear")
-                                    outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
-                                                                                         self.ADCprecision)
-                                    outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
-                                                                                              self.ADCprecision)
+                            # choose one from these two: linear or non-linear
+                            # if self.is_linear == 1:
+                            #     # linear quantization
+                            #     outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+                            #                                                       self.ADCprecision)
+                            #     outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+                            #                                                            self.ADCprecision)
+                            # else:
+                            #     # non-linear quantization
+                            #     # print("calling nonlinear")
+                            #     outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+                            #                                                          self.ADCprecision)
+                            #     outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+                            #                                                               self.ADCprecision)
 
-                                scaler = cellRange ** k
-                                outputSP = outputSP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
-                                outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            # scaler = cellRange ** k
+                            # outputSP = outputSP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            # outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
+                            outputSP = outputSP + outputPartial * 1 * 2 / (1 - 1 / onoffratio)
+                            outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / onoffratio)
+
                             # !!! Important !!! the dummy need to be multiplied by a ratio
                             outputSP = outputSP - outputD  # minus dummy column
                             outputP = outputP + outputSP
                         scalerIN = 2 ** z
                         outputIN = outputIN + outputP * scalerIN
                     output = output + outputIN / (2 ** self.wl_input)
-        output = output / (2 ** self.wl_weight)  # since weight range was convert from [-1, 1] to [-256, 256]
+        # output = output / (2 ** self.wl_weight)  # since weight range was convert from [-1, 1] to [-256, 256]
+        return output
 
     def forward(self, input):
+        is_input_bin = 0
         if input.size(1) != 3:
+            is_input_bin = 1
             input.data = Binarize(input.data)
         if not hasattr(self.weight, 'org'):
             self.weight.org = self.weight.data.clone()
         self.weight.data = Binarize(self.weight.org)
 
-        out = nn.functional.conv2d(input, self.weight, None, self.stride,
+        print("conv: is_input_bin = ", is_input_bin)
+        self.hw = 1
+        if self.hw == 0:
+            out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
+            print("conv2d finished")
+        else:
+            out = self.neurosim_conv2d(input)
+            print("neurosim_conv2d finished: ", out[0][0][0])
+            conv2d_out = nn.functional.conv2d(input, self.weight, None, self.stride,
+                                   self.padding, self.dilation, self.groups)
+            print("conv2d finished: ", conv2d_out[0][0][0])
 
         if not self.bias is None:
             self.bias.org = self.bias.data.clone()

@@ -323,16 +323,16 @@ def validate(data_loader, model, criterion, epoch):
     # switch to evaluate mode
     model.eval()
     # see model
-    for param in model.parameters():
-        print(param)
+    # for param in model.parameters():
+        # print(param)
     # test accuracy
     num_correct = 0
     num_samples = 0
     with torch.no_grad():
         for x, y in data_loader:
             x, y = x.cuda(), y.cuda()
-            print("x\n", x)
-            print("y\n", y)
+            # print("x\n", x)
+            # print("y\n", y)
             scores = model(x)
             _, predictions = scores.max(1)
             num_correct += (predictions == y).sum()

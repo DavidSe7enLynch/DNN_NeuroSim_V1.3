@@ -2,8 +2,9 @@
 import os
 import torch.nn as nn
 import shutil
-from modules.quantization_cpu_np_infer import QConv2d, QLinear
-from modules.floatrange_cpu_np_infer import FConv2d, FLinear
+# from modules.quantization_cpu_np_infer import QConv2d, QLinear
+# from modules.floatrange_cpu_np_infer import FConv2d, FLinear
+from models.binarized_modules import BinarizeConv2d, BinarizeLinear
 import numpy as np
 import torch
 from utee import wage_quantizer
@@ -18,11 +19,11 @@ def Neural_Sim(self, input, output):
     weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(self.name) + '.csv'
     f = open('./layer_record_' + str(model_n) + '/trace_command.sh', "a")
     f.write(weight_file_name + ' ' + input_file_name + ' ')
-    if FP:
-        weight_q = float_quantizer.float_range_quantize(self.weight, self.wl_weight)
-    else:
-        weight_q = wage_quantizer.Q(self.weight, self.wl_weight)
-    write_matrix_weight(weight_q.cpu().data.numpy(), weight_file_name)
+    # if FP:
+    #     weight_q = float_quantizer.float_range_quantize(self.weight, self.wl_weight)
+    # else:
+    #     weight_q = wage_quantizer.Q(self.weight, self.wl_weight)
+    write_matrix_weight(self.weight.cpu().data.numpy(), weight_file_name)
     # print(self.weight.shape)
     # print(len(self.weight.shape))
     # print(self.weight.shape[-1])
@@ -143,10 +144,11 @@ def remove_hook_list(hook_handle_list):
         handle.remove()
 
 
-def hardware_evaluation(model, wl_weight, wl_activation, model_name, mode):
+def hardware_evaluation(model, wl_weight, wl_activation, model_name):
     global model_n, FP
     model_n = model_name
-    FP = 1 if mode == 'FP' else 0
+    # FP = 1 if mode == 'FP' else 0
+    FP = 0
 
     hook_handle_list = []
     if not os.path.exists('./layer_record_' + str(model_name)):
@@ -158,7 +160,7 @@ def hardware_evaluation(model, wl_weight, wl_activation, model_name, mode):
         wl_activation) + ' ')
 
     for i, layer in enumerate(model.modules()):
-        if isinstance(layer, (FConv2d, QConv2d, nn.Conv2d)) or isinstance(layer, (FLinear, QLinear, nn.Linear)):
+        if isinstance(layer, (BinarizeConv2d, nn.Conv2d)) or isinstance(layer, (BinarizeLinear, nn.Linear)):
             print("inside hardware_evaluation, layer: ", layer)
             hook_handle_list.append(layer.register_forward_hook(Neural_Sim))
     return hook_handle_list

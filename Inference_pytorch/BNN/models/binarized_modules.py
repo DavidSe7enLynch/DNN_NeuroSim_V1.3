@@ -389,7 +389,7 @@ class BinarizeLinear(nn.Linear):
         print("linear: is_input_bin = ", is_input_bin)
         # print("bin weight: ", self.weight)
 
-        self.hw = 1
+        # self.hw = 0
         if self.hw == 0:
             out = nn.functional.linear(input, self.weight)
             print("linear finished")
@@ -408,7 +408,7 @@ class BinarizeLinear(nn.Linear):
 
 class BinarizeConv2d(nn.Conv2d):
 
-    def __init__(self, *kargs, hw=1, **kwargs):
+    def __init__(self, *kargs, hw=0, **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
         wl_input = 4
         wl_weight = 1
@@ -621,7 +621,7 @@ class BinarizeConv2d(nn.Conv2d):
         self.weight.data = Binarize(self.weight.org)
 
         print("conv: is_input_bin = ", is_input_bin)
-        self.hw = 1
+        # self.hw = 0
         if self.hw == 0:
             out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)

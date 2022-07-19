@@ -22,6 +22,29 @@ from datetime import datetime
 from ast import literal_eval
 from torchvision.utils import save_image
 
+from GPUtil import showUtilization as gpu_usage
+from numba import cuda
+import gc
+
+from utee import hook
+
+def free_gpu_cache():
+    print("Initial GPU Usage")
+    gpu_usage()
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    cuda.select_device(0)
+    cuda.close()
+    cuda.select_device(0)
+
+    print("GPU Usage after emptying the cache")
+    gpu_usage()
+
+free_gpu_cache()
+device = cuda.get_current_device()
+device.reset()
+torch.cuda.memory_summary(device=None, abbreviated=False)
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -54,7 +77,7 @@ parser.add_argument('--epochs', default=2500, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=256, type=int,
+parser.add_argument('-b', '--batch-size', default=16, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--optimizer', default='SGD', type=str, metavar='OPT',
                     help='optimizer function used')
@@ -97,6 +120,7 @@ def main():
 
     if 'cuda' in args.type:
         args.gpus = [int(i) for i in args.gpus.split(',')]
+        print("args.gpus: ", args.gpus)
         torch.cuda.set_device(args.gpus[0])
         cudnn.benchmark = True
     else:
@@ -323,13 +347,16 @@ def validate(data_loader, model, criterion, epoch):
     # switch to evaluate mode
     model.eval()
     # see model
-    # for param in model.parameters():
-        # print(param)
+    for i, param in enumerate(model.parameters()):
+        print(i, param)
     # test accuracy
     num_correct = 0
     num_samples = 0
     with torch.no_grad():
-        for x, y in data_loader:
+        for i, (x, y) in enumerate(data_loader):
+            # if i == 0:
+            #     print("create hook list")
+            #     hook_handle_list = hook.hardware_evaluation(model, 1, 1, args.model)
             x, y = x.cuda(), y.cuda()
             # print("x\n", x)
             # print("y\n", y)
@@ -337,9 +364,15 @@ def validate(data_loader, model, criterion, epoch):
             _, predictions = scores.max(1)
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
+            # if i == 0:
+            #     print("remove hook list")
+            #     hook.remove_hook_list(hook_handle_list)
+
     print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples) * 100:.2f}')
-    return forward(data_loader, model, criterion, epoch,
-                   training=False, optimizer=None)
+    # return forward(data_loader, model, criterion, epoch,
+    #                training=False, optimizer=None)
+    print("start testing hardware effects")
+
 
 
 if __name__ == '__main__':

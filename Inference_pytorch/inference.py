@@ -16,6 +16,8 @@ from utee import hook
 from datetime import datetime
 from subprocess import call
 
+torch.cuda.empty_cache()
+
 parser = argparse.ArgumentParser(description='PyTorch CIFAR-X Example')
 parser.add_argument('--dataset', default='cifar10', help='cifar10|cifar100|imagenet|simplematrix')
 parser.add_argument('--model', default='VGG8', help='VGG8|DenseNet40|ResNet18|Llayer')
@@ -162,6 +164,7 @@ else:
             data, target = data.cuda(), target.cuda()
         with torch.no_grad():
             data, target = Variable(data), Variable(target)
+            print("inference, i =", i)
             output = modelCF(data)
             test_loss_i = criterion(output, target)
             test_loss += test_loss_i.data
@@ -169,6 +172,7 @@ else:
             correct += pred.cpu().eq(indx_target).sum()
             total_pred += len(pred)
         if i == 0:
+            print("remove hook list")
             hook.remove_hook_list(hook_handle_list)
 
     test_loss = test_loss / len(test_loader)  # average over number of mini-batch

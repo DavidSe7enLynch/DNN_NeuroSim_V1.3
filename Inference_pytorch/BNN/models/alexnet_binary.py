@@ -6,43 +6,43 @@ __all__ = ['alexnet_binary']
 
 class AlexNetOWT_BN(nn.Module):
 
-    def __init__(self, num_classes=1000):
+    def __init__(self, num_classes=1000, hw=0):
         super(AlexNetOWT_BN, self).__init__()
         self.ratioInfl=3
         self.features = nn.Sequential(
-            BinarizeConv2d(3, int(64*self.ratioInfl), kernel_size=11, stride=4, padding=2),
+            BinarizeConv2d(3, int(64*self.ratioInfl), hw=hw, kernel_size=11, stride=4, padding=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.BatchNorm2d(int(64*self.ratioInfl)),
             nn.Hardtanh(inplace=True),
-            BinarizeConv2d(int(64*self.ratioInfl), int(192*self.ratioInfl), kernel_size=5, padding=2),
+            BinarizeConv2d(int(64*self.ratioInfl), int(192*self.ratioInfl), hw=hw, kernel_size=5, padding=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.BatchNorm2d(int(192*self.ratioInfl)),
             nn.Hardtanh(inplace=True),
 
-            BinarizeConv2d(int(192*self.ratioInfl), int(384*self.ratioInfl), kernel_size=3, padding=1),
+            BinarizeConv2d(int(192*self.ratioInfl), int(384*self.ratioInfl), hw=hw, kernel_size=3, padding=1),
             nn.BatchNorm2d(int(384*self.ratioInfl)),
             nn.Hardtanh(inplace=True),
 
-            BinarizeConv2d(int(384*self.ratioInfl), int(256*self.ratioInfl), kernel_size=3, padding=1),
+            BinarizeConv2d(int(384*self.ratioInfl), int(256*self.ratioInfl), hw=hw, kernel_size=3, padding=1),
             nn.BatchNorm2d(int(256*self.ratioInfl)),
             nn.Hardtanh(inplace=True),
 
-            BinarizeConv2d(int(256*self.ratioInfl), 256, kernel_size=3, padding=1),
+            BinarizeConv2d(int(256*self.ratioInfl), 256, hw=hw, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.BatchNorm2d(256),
             nn.Hardtanh(inplace=True)
 
         )
         self.classifier = nn.Sequential(
-            BinarizeLinear(256 * 6 * 6, 4096),
+            BinarizeLinear(256 * 6 * 6, 4096, hw=hw),
             nn.BatchNorm1d(4096),
             nn.Hardtanh(inplace=True),
             #nn.Dropout(0.5),
-            BinarizeLinear(4096, 4096),
+            BinarizeLinear(4096, 4096, hw=hw),
             nn.BatchNorm1d(4096),
             nn.Hardtanh(inplace=True),
             #nn.Dropout(0.5),
-            BinarizeLinear(4096, num_classes),
+            BinarizeLinear(4096, num_classes, hw=hw),
             nn.BatchNorm1d(1000),
             nn.LogSoftmax()
         )
@@ -87,6 +87,6 @@ class AlexNetOWT_BN(nn.Module):
         return x
 
 
-def alexnet_binary(**kwargs):
+def alexnet_binary(hw=0, **kwargs):
     num_classes = getattr(kwargs, 'num_classes', 1000)
-    return AlexNetOWT_BN(num_classes)
+    return AlexNetOWT_BN(num_classes, hw)

@@ -12,34 +12,34 @@ class VGG_Cifar10(nn.Module):
         super(VGG_Cifar10, self).__init__()
         self.infl_ratio=3;
         self.features = nn.Sequential(
-            BinarizeConv2d(3, 128*self.infl_ratio, kernel_size=3, stride=1, padding=1,
+            BinarizeConv2d(3, 128*self.infl_ratio, hw=hw, kernel_size=3, stride=1, padding=1,
                       bias=True),
             nn.BatchNorm2d(128*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
-            BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(128*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(128*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(128*self.infl_ratio, 256*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
             nn.BatchNorm2d(256*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(256*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(256*self.infl_ratio, 512*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(256*self.infl_ratio, 512*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
             nn.BatchNorm2d(512*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(512*self.infl_ratio, 512, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(512*self.infl_ratio, 512, hw=hw, kernel_size=3, padding=1, bias=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(512),
             nn.Hardtanh(inplace=True)

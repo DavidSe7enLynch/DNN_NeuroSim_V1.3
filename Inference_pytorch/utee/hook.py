@@ -14,6 +14,7 @@ def Neural_Sim(self, input, output):
     global model_n, FP
 
     print("quantize layer, input: ", self.name)
+    print("input size: ", input[0].size())
     input_file_name = './layer_record_' + str(model_n) + '/input' + str(self.name) + '.csv'
     weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(self.name) + '.csv'
     f = open('./layer_record_' + str(model_n) + '/trace_command.sh', "a")

@@ -79,7 +79,7 @@ def Quantize(tensor, quant_mode='det', params=None, numBits=8):
 
 class BinarizeLinear(nn.Linear):
 
-    def __init__(self, *kargs, hw=0, **kwargs):
+    def __init__(self, *kargs, hw=0, name="BinarizeLinear", **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
         wl_input = 4
         wl_activate = 4
@@ -112,6 +112,7 @@ class BinarizeLinear(nn.Linear):
         self.target = target
         self.is_linear = is_linear
         self.scale = wage_initializer.wage_init_(self.weight, self.wl_weight, factor=1.0)
+        self.name = name
 
     # hardware effect simulation
     # used only when inferencing
@@ -408,7 +409,7 @@ class BinarizeLinear(nn.Linear):
 
 class BinarizeConv2d(nn.Conv2d):
 
-    def __init__(self, *kargs, hw=0, **kwargs):
+    def __init__(self, *kargs, hw=0, name="BinarizeConv2d", **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
         wl_input = 4
         wl_weight = 1
@@ -429,6 +430,7 @@ class BinarizeConv2d(nn.Conv2d):
         self.v = v
         self.detect = detect
         self.target = target
+        self.name = name
 
     def neurosim_conv2d(self, input):
         outputOriginal = nn.functional.conv2d(input, self.weight, None, self.stride,

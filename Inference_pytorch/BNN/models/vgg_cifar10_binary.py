@@ -12,49 +12,49 @@ class VGG_Cifar10(nn.Module):
         super(VGG_Cifar10, self).__init__()
         self.infl_ratio=3;
         self.features = nn.Sequential(
-            BinarizeConv2d(3, 128*self.infl_ratio, hw=hw, kernel_size=3, stride=1, padding=1,
+            BinarizeConv2d(3, 128*self.infl_ratio, hw=hw, name="Conv0_", kernel_size=3, stride=1, padding=1,
                       bias=True),
             nn.BatchNorm2d(128*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
-            BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, hw=hw, name="Conv1_", kernel_size=3, padding=1, bias=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(128*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(128*self.infl_ratio, 256*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(128*self.infl_ratio, 256*self.infl_ratio, hw=hw, name="Conv2_", kernel_size=3, padding=1, bias=True),
             nn.BatchNorm2d(256*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, hw=hw, name="Conv3_", kernel_size=3, padding=1, bias=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(256*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(256*self.infl_ratio, 512*self.infl_ratio, hw=hw, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(256*self.infl_ratio, 512*self.infl_ratio, hw=hw, name="Conv4_", kernel_size=3, padding=1, bias=True),
             nn.BatchNorm2d(512*self.infl_ratio),
             nn.Hardtanh(inplace=True),
 
 
-            BinarizeConv2d(512*self.infl_ratio, 512, hw=hw, kernel_size=3, padding=1, bias=True),
+            BinarizeConv2d(512*self.infl_ratio, 512, hw=hw, name="Conv5_", kernel_size=3, padding=1, bias=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(512),
             nn.Hardtanh(inplace=True)
 
         )
         self.classifier = nn.Sequential(
-            BinarizeLinear(512 * 4 * 4, 1024, hw=hw, bias=True),
+            BinarizeLinear(512 * 4 * 4, 1024, hw=hw, name="FC0_", bias=True),
             nn.BatchNorm1d(1024),
             nn.Hardtanh(inplace=True),
             #nn.Dropout(0.5),
-            BinarizeLinear(1024, 1024, hw=hw, bias=True),
+            BinarizeLinear(1024, 1024, hw=hw, name="FC1_", bias=True),
             nn.BatchNorm1d(1024),
             nn.Hardtanh(inplace=True),
             #nn.Dropout(0.5),
-            BinarizeLinear(1024, num_classes, hw=hw, bias=True),
+            BinarizeLinear(1024, num_classes, hw=hw, name="FC2_", bias=True),
             nn.BatchNorm1d(num_classes, affine=False),
             nn.LogSoftmax()
         )

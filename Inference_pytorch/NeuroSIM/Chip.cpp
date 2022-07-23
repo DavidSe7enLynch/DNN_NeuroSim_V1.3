@@ -505,6 +505,7 @@ vector<double> ChipCalculateArea(InputParameter& inputParameter, Technology& tec
 	
 	if (param->novelMapping) {
 		areaNMTile = TileCalculateArea(numPENM, desiredPESizeNM, true, &NMheight, &NMwidth);
+		cout << "HRR inside chip.cpp, NMheight = " << NMheight << ", NMwidth = " << NMwidth << endl;
 		double NMTileArea = areaNMTile[0];
 		double NMTileAreaIC = areaNMTile[1];
 		double NMTileAreaADC = areaNMTile[2];
@@ -538,6 +539,7 @@ vector<double> ChipCalculateArea(InputParameter& inputParameter, Technology& tec
 	*CMTilewidth = CMwidth;
 	
 	// global buffer is made up by multiple cores
+	cout << "HRR inside chip.cpp, NMheight = " << NMheight << "CMheight = " << CMheight << endl;
 	globalBuffer->CalculateArea(numTileRow*max(NMheight, CMheight), NULL, NONE);
 	double globalBufferArea = globalBuffer->area*numBufferCore;
 	double globalBufferHeight = numTileRow*max(NMheight, CMheight);

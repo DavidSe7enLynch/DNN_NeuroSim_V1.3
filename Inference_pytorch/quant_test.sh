@@ -11,11 +11,11 @@
 # subArray = 128
 # ADCprecision = 5
 
-wl_weight_array=(8 16 32)
-subArray_array=(32 64 128 356 512 1024)
-cellBit_array=(1 2 3 4 5 6)
-ADCprecision_array=(1 3 5 7 9 11)
-onoffratio_array=(2 6 10 15 20 50)
+#wl_weight_array=(8 16 32)
+#subArray_array=(32 64 128 356 512 1024)
+#cellBit_array=(1 2 3 4 5 6)
+#ADCprecision_array=(1 3 5 7 9 11)
+#onoffratio_array=(2 6 10 15 20 50)
 
 model_name="VGG8"
 name="wl_weight"
@@ -51,7 +51,7 @@ cellBit=4
 ADCprecision=5
 inference=1
 model_bit=8
-model="best-140.pth"
+model="VGG8.pth"
 quant_version="old"
 
 time=`date +"%Y-%m-%d %T"`

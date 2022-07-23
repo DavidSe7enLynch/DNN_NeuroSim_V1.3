@@ -55,7 +55,7 @@ using namespace std;
 
 Param::Param() {
 	/***************************************** user defined design options and parameters *****************************************/
-	operationmode = 2;     		// 1: conventionalSequential (Use several multi-bit RRAM as one synapse)
+	operationmode = 4;     		// 1: conventionalSequential (Use several multi-bit RRAM as one synapse)
 								// 2: conventionalParallel (Use several multi-bit RRAM as one synapse)
 	
 	memcelltype = 2;        	// 1: cell.memCellType = Type::SRAM

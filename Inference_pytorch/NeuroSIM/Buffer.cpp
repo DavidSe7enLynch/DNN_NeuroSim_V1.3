@@ -84,6 +84,7 @@ void Buffer::Initialize(int _numBit, int _interface_width, int _num_interface, d
 }
 
 void Buffer::CalculateArea(double _newHeight, double _newWidth, AreaModify _option) {
+    cout << "HRR: inside Buffer::CalculateArea, newHeight = " << _newHeight << ", newWidth = " << _newWidth << endl;
 	if (!initialized) {
 		cout << "[Buffer] Error: Require initialization first!" << endl;
 	} else {

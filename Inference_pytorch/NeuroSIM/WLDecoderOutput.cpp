@@ -79,6 +79,7 @@ void WLDecoderOutput::Initialize(int _numWLRow, bool _multifunctional, bool _neu
 }
 
 void WLDecoderOutput::CalculateArea(double _newHeight, double _newWidth, AreaModify _option) {
+    cout << "HRR: inside WLDecoderOutput.cpp, area init " << area << endl;
 	if (!initialized) {
 		cout << "[WLDecoderOutput] Error: Require initialization first!" << endl;
 	} else {

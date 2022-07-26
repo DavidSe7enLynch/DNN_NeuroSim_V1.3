@@ -280,6 +280,8 @@ vector<double> TileCalculateArea(double numPE, double peSize, bool NMTile, doubl
 		hTreeNM->CalculateArea(PEheight, PEwidth, 16);
 
 		area += PEarea*numPE + accumulationNM->area + inputBufferNM->area + outputBufferNM->area + hTreeNM->area;
+
+		cout << "HRR inside tile.cpp, NMTile, inputBufferNM->area = " << inputBufferNM->area << endl;
 		
 		*height = sqrt(area);
 		*width = area/(*height);
@@ -318,7 +320,13 @@ vector<double> TileCalculateArea(double numPE, double peSize, bool NMTile, doubl
 		hTreeCM->CalculateArea(PEheight, PEwidth, 16);
 	
 		area += PEarea*numPE + accumulationCM->area + inputBufferCM->area + outputBufferCM->area + hTreeCM->area;
-		
+
+		cout << "HRR inside tile.cpp, CMTile, inputBufferCM->area = " << inputBufferCM->area << endl;
+		cout << "HRR inside tile.cpp, CMTile, outputBufferCM->area = " << outputBufferCM->area << endl;
+		cout << "HRR inside tile.cpp, CMTile, hTreeCM->area = " << hTreeCM->area << endl;
+		cout << "HRR inside tile.cpp, CMTile, PEarea*numPE = " << PEarea*numPE << endl;
+		cout << "HRR inside tile.cpp, CMTile, ceil(sqrt((double)numPE))*PEheight = " << ceil(sqrt((double)numPE))*PEheight << endl;
+
 		*height = sqrt(area);
 		*width = area/(*height);
 		
@@ -329,7 +337,7 @@ vector<double> TileCalculateArea(double numPE, double peSize, bool NMTile, doubl
 		areaResults.push_back(PEareaOther*numPE + inputBufferCM->area + outputBufferCM->area + areareLu + areasigmoid);
 		areaResults.push_back(PEareaArray*numPE);
 	}
-	
+	cout << "HRR inside tile.cpp, area = " << area << endl;
 	return areaResults;
 }
 

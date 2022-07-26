@@ -539,7 +539,7 @@ vector<double> ChipCalculateArea(InputParameter& inputParameter, Technology& tec
 	*CMTilewidth = CMwidth;
 	
 	// global buffer is made up by multiple cores
-	cout << "HRR inside chip.cpp, NMheight = " << NMheight << "CMheight = " << CMheight << endl;
+	cout << "HRR inside chip.cpp, NMheight = " << NMheight << ", CMheight = " << CMheight << endl;
 	globalBuffer->CalculateArea(numTileRow*max(NMheight, CMheight), NULL, NONE);
 	double globalBufferArea = globalBuffer->area*numBufferCore;
 	double globalBufferHeight = numTileRow*max(NMheight, CMheight);

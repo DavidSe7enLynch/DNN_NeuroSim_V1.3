@@ -71,6 +71,10 @@ void DecoderDriver::Initialize(int _mode, int _numOutput /* # of array rows/colu
 }
 
 void DecoderDriver::CalculateArea(double _newHeight, double _newWidth, AreaModify _option) {
+    cout << "HRR: inside DecoderDriver.cpp, area init " << area << endl;
+    cout << "HRR: inside DecoderDriver.cpp, _newHeight " << _newHeight << endl;
+    cout << "HRR: inside DecoderDriver.cpp, _newWidth " << _newWidth << endl;
+
 	if (!initialized) {
 		cout << "[Decoder Driver] Error: Require initialization first!" << endl;
 	} else {

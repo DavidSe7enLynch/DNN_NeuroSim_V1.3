@@ -84,8 +84,8 @@ void Buffer::Initialize(int _numBit, int _interface_width, int _num_interface, d
 }
 
 void Buffer::CalculateArea(double _newHeight, double _newWidth, AreaModify _option) {
-    cout << "HRR: inside Buffer::CalculateArea, newHeight = " << _newHeight << ", newWidth = " << _newWidth << endl;
-    cout << "HRR: inside Buffer::CalculateArea, area init " << area << endl;
+//    cout << "HRR: inside Buffer::CalculateArea, newHeight = " << _newHeight << ", newWidth = " << _newWidth << endl;
+//    cout << "HRR: inside Buffer::CalculateArea, area init " << area << endl;
 	if (!initialized) {
 		cout << "[Buffer] Error: Require initialization first!" << endl;
 	} else {
@@ -94,20 +94,20 @@ void Buffer::CalculateArea(double _newHeight, double _newWidth, AreaModify _opti
 		width = 0;
 		
 		if (SRAM) {
-		    cout << "HRR: inside Buffer::CalculateArea, SRAM " << endl;
+//		    cout << "HRR: inside Buffer::CalculateArea, SRAM " << endl;
 			memoryArea = lengthRow * lengthCol;
 			wlDecoder.CalculateArea(lengthCol, NULL, NONE);
 			precharger.CalculateArea(NULL, lengthRow, NONE);
 			sramWriteDriver.CalculateArea(NULL, lengthRow, NONE);
 			area += memoryArea + wlDecoder.area + precharger.area + sramWriteDriver.area;
 		} else {
-		    cout << "HRR: inside Buffer::CalculateArea, not SRAM " << endl;
+//		    cout << "HRR: inside Buffer::CalculateArea, not SRAM " << endl;
 			dff.CalculateArea(NULL, NULL, NONE);
 			wlDecoder.CalculateArea(dff.hDff*ceil((double)numBit/(double)interface_width), NULL, NONE);
 			area += dff.area + wlDecoder.area;
-			cout << "HRR: inside Buffer::CalculateArea, not SRAM, dff.area " << dff.area << endl;
-			cout << "HRR: inside Buffer::CalculateArea, not SRAM, wlDecoder.area " << wlDecoder.area << endl;
-			cout << "HRR: inside Buffer::CalculateArea, not SRAM, dff.hDff*ceil((double)numBit/(double)interface_width) " << dff.hDff*ceil((double)numBit/(double)interface_width) << endl;
+//			cout << "HRR: inside Buffer::CalculateArea, not SRAM, dff.area " << dff.area << endl;
+//			cout << "HRR: inside Buffer::CalculateArea, not SRAM, wlDecoder.area " << wlDecoder.area << endl;
+//			cout << "HRR: inside Buffer::CalculateArea, not SRAM, dff.hDff*ceil((double)numBit/(double)interface_width) " << dff.hDff*ceil((double)numBit/(double)interface_width) << endl;
 		}
 
 		if (_newWidth && _option==NONE) {
@@ -134,7 +134,7 @@ void Buffer::CalculateArea(double _newHeight, double _newWidth, AreaModify _opti
 			default:    // NONE
 				break;
 		}
-		cout << "HRR: inside Buffer::CalculateArea, area final " << area << endl;
+//		cout << "HRR: inside Buffer::CalculateArea, area final " << area << endl;
 	}
 }
 

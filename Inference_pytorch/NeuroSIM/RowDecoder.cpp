@@ -130,9 +130,9 @@ void RowDecoder::Initialize(DecoderMode _mode, int _numAddrRow, bool _MUX, bool 
 }
 
 void RowDecoder::CalculateArea(double _newHeight, double _newWidth, AreaModify _option) {
-    cout << "HRR: inside RowDecoder.cpp, area init " << area << endl;
-    cout << "HRR: inside RowDecoder.cpp, _newHeight " << _newHeight << endl;
-    cout << "HRR: inside RowDecoder.cpp, _newWidth " << _newWidth << endl;
+//    cout << "HRR: inside RowDecoder.cpp, area init " << area << endl;
+//    cout << "HRR: inside RowDecoder.cpp, _newHeight " << _newHeight << endl;
+//    cout << "HRR: inside RowDecoder.cpp, _newWidth " << _newWidth << endl;
 	if (!initialized) {
 		cout << "[Row Decoder Area] Error: Require initialization first!" << endl;
 	} else {
@@ -149,9 +149,9 @@ void RowDecoder::CalculateArea(double _newHeight, double _newWidth, AreaModify _
 		// Output Driver INV
 		CalculateGateArea(INV, 1, widthDriverInvN, widthDriverInvP, tech.featureSize*MAX_TRANSISTOR_HEIGHT, tech, &hDriverInv, &wDriverInv);
 
-        cout << "HRR: inside RowDecoder.cpp, initially height = " << height << ", width = " << width << ", _option = " << _option << endl;
-        cout << "HRR: inside RowDecoder.cpp, MUX = " << MUX << endl;
-        cout << "HRR: inside RowDecoder.cpp, mode = " << mode << ", REGULAR_ROW = " << REGULAR_ROW << ", REGULAR_COL = " << REGULAR_COL << endl;
+//        cout << "HRR: inside RowDecoder.cpp, initially height = " << height << ", width = " << width << ", _option = " << _option << endl;
+//        cout << "HRR: inside RowDecoder.cpp, MUX = " << MUX << endl;
+//        cout << "HRR: inside RowDecoder.cpp, mode = " << mode << ", REGULAR_ROW = " << REGULAR_ROW << ", REGULAR_COL = " << REGULAR_COL << endl;
 
 		if (mode == REGULAR_ROW) {	// Connect to rows
 			if (_newHeight && _option==NONE) {
@@ -183,17 +183,17 @@ void RowDecoder::CalculateArea(double _newHeight, double _newWidth, AreaModify _
 					numInvPerCol = numInv;
 				}
 				numColInv = (int)ceil((double)numInv/numInvPerCol);
-				cout << "HRR: inside RowDecoder.cpp, hInv = " << hInv << ", numInv = " << numInv << ", numInvPerCol = " << numInvPerCol << endl;
+//				cout << "HRR: inside RowDecoder.cpp, wInv = " << wInv << ", numColInv = " << numColInv << ", ceil((double)numInv/numInvPerCol) = " << ceil((double)numInv/numInvPerCol) << ", (int)ceil((double)numInv/numInvPerCol) = " << (int)ceil((double)numInv/numInvPerCol) << endl;
+//				cout << "HRR: inside RowDecoder.cpp, hInv = " << hInv << ", numInv = " << numInv << ", numInvPerCol = " << numInvPerCol << endl;
 
 				height = _newHeight;
 				width = wInv * numColInv + wNand * numColNand + M3_PITCH * numMetalConnection * tech.featureSize + wNor * numColNor;
-				cout << "HRR: inside RowDecoder.cpp, wInv * numColInv = " << wInv * numColInv << ", wNand * numColNand = " << wNand * numColNand << ", M3_PITCH * numMetalConnection * tech.featureSize = " << M3_PITCH * numMetalConnection * tech.featureSize << ", wNor * numColNor = " << wNor * numColNor << endl;
-				cout << "HRR: inside RowDecoder.cpp, wInv = " << wInv << ", numColInv = " << numColInv << endl;
+//				cout << "HRR: inside RowDecoder.cpp, wInv * numColInv = " << wInv * numColInv << ", wNand * numColNand = " << wNand * numColNand << ", M3_PITCH * numMetalConnection * tech.featureSize = " << M3_PITCH * numMetalConnection * tech.featureSize << ", wNor * numColNor = " << wNor * numColNor << endl;
 				if (MUX) {    // Mux enable circuit (NAND + INV) + INV
-				    cout << "HRR: inside RowDecoder.cpp, (wNand + wInv * 2) * numColNor = " << (wNand + wInv * 2) * numColNor << endl;
+//				    cout << "HRR: inside RowDecoder.cpp, (wNand + wInv * 2) * numColNor = " << (wNand + wInv * 2) * numColNor << endl;
 					width += (wNand + wInv * 2) * numColNor;
 				} else {    // REGULAR: 2 INV as output driver
-				    cout << "HRR: inside RowDecoder.cpp, (wDriverInv * 2) * numColNor = " << (wDriverInv * 2) * numColNor << endl;
+//				    cout << "HRR: inside RowDecoder.cpp, (wDriverInv * 2) * numColNor = " << (wDriverInv * 2) * numColNor << endl;
 					width += (wDriverInv * 2) * numColNor;
 				}
 			} else {
@@ -255,7 +255,7 @@ void RowDecoder::CalculateArea(double _newHeight, double _newWidth, AreaModify _
 				}
 			}
 		}
-		cout << "HRR: inside RowDecoder.cpp, finally height = " << height << ", width = " << width << endl;
+//		cout << "HRR: inside RowDecoder.cpp, finally height = " << height << ", width = " << width << endl;
 		area = height * width;
 
         // Modify layout
@@ -290,7 +290,7 @@ void RowDecoder::CalculateArea(double _newHeight, double _newWidth, AreaModify _
 		// Output Driver INV
 		CalculateGateCapacitance(INV, 1, widthDriverInvN, widthDriverInvP, hDriverInv, tech, &capDriverInvInput, &capDriverInvOutput);
 	}
-	cout << "HRR: inside RowDecoder.cpp, area final " << area << endl;
+//	cout << "HRR: inside RowDecoder.cpp, area final " << area << endl;
 }
 
 void RowDecoder::CalculateLatency(double _rampInput, double _capLoad1, double _capLoad2, double numRead, double numWrite) {

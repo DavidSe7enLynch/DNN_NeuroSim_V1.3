@@ -76,6 +76,8 @@ int main(int argc, char * argv[]) {
 		cout << "ERROR!: Memory precision is even higher than synapse precision, please modify 'cellBit' in Param.cpp!" << endl;
 		param->cellBit = param->synapseBit;
 	}
+
+	cout << "HRR operation mode: " << param->operationmode << ", cellBit: " << param->cellBit << endl;
 	
 	/*** initialize operationMode as default ***/
 	param->conventionalParallel = 0;
@@ -194,10 +196,10 @@ int main(int argc, char * argv[]) {
 	double NMTilewidth = 0;
 	vector<double> chipAreaResults;
 
-	cout << "HRR inside main.cpp, chipAreaResults starting, chipHeight = " << chipHeight << ", chipWidth = " << chipWidth << endl;
+//	cout << "HRR inside main.cpp, chipAreaResults starting, chipHeight = " << chipHeight << ", chipWidth = " << chipWidth << endl;
 	chipAreaResults = ChipCalculateArea(inputParameter, tech, cell, desiredNumTileNM, numPENM, desiredPESizeNM, desiredNumTileCM, desiredTileSizeCM, desiredPESizeCM, numTileRow, 
 					&chipHeight, &chipWidth, &CMTileheight, &CMTilewidth, &NMTileheight, &NMTilewidth);
-	cout << "HRR inside main.cpp, chipAreaResults calculated" << endl;
+//	cout << "HRR inside main.cpp, chipAreaResults calculated" << endl;
 	chipArea = chipAreaResults[0];
 	chipAreaIC = chipAreaResults[1];
 	chipAreaADC = chipAreaResults[2];

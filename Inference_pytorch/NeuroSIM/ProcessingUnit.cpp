@@ -221,7 +221,7 @@ void ProcessingUnitInitialize(SubArray *& subArray, InputParameter& inputParamet
 
 
 vector<double> ProcessingUnitCalculateArea(SubArray *subArray, int numSubArrayRow, int numSubArrayCol, bool NMpe, double *height, double *width, double *bufferArea) {
-	cout << "HRR: inside ProcessingUnit.cpp, " << endl;
+//	cout << "HRR: inside ProcessingUnit.cpp, " << endl;
 
 	vector<double> areaResults;
 	*height = 0;

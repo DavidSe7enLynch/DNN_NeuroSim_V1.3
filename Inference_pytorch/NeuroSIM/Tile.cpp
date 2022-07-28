@@ -172,7 +172,8 @@ void TileInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		numInBufferCore = ceil((numPENM*param->numBitInput*param->numRowSubArray)/(param->tileBufferCoreSizeRow*param->tileBufferCoreSizeCol));
 		
 		if ((numPENM*param->numBitInput*param->numRowSubArray) < (param->tileBufferCoreSizeRow*param->tileBufferCoreSizeCol)) {
-			inputBufferNM->Initialize(numPENM*param->numBitInput*param->numRowSubArray, numPENM*param->numRowSubArray, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
+//			inputBufferNM->Initialize(numPENM*param->numBitInput*param->numRowSubArray, numPENM*param->numRowSubArray, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
+		    inputBufferNM->Initialize(numPENM*2*param->numRowSubArray, numPENM*param->numRowSubArray, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
 		} else {
 			inputBufferNM->Initialize((param->tileBufferCoreSizeRow*param->tileBufferCoreSizeCol), param->tileBufferCoreSizeCol, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
 		}
@@ -235,7 +236,8 @@ void TileInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	numInBufferCore = ceil((numPECM*param->numBitInput*param->numRowSubArray)/(param->tileBufferCoreSizeRow*param->tileBufferCoreSizeCol));
 	
 	if ((numPECM*param->numBitInput*param->numRowSubArray) < (param->tileBufferCoreSizeRow*param->tileBufferCoreSizeCol)) {
-		inputBufferCM->Initialize(numPECM*param->numBitInput*param->numRowSubArray, numPECM*param->numRowSubArray, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
+//		inputBufferCM->Initialize(numPECM*param->numBitInput*param->numRowSubArray, numPECM*param->numRowSubArray, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
+	    inputBufferCM->Initialize(numPECM*2*param->numRowSubArray, numPECM*param->numRowSubArray, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
 	} else {
 		inputBufferCM->Initialize((param->tileBufferCoreSizeRow*param->tileBufferCoreSizeCol), param->tileBufferCoreSizeCol, 1, param->unitLengthWireResistance, param->clkFreq, param->peBufferType);
 	}
@@ -281,7 +283,7 @@ vector<double> TileCalculateArea(double numPE, double peSize, bool NMTile, doubl
 
 		area += PEarea*numPE + accumulationNM->area + inputBufferNM->area + outputBufferNM->area + hTreeNM->area;
 
-		cout << "HRR inside tile.cpp, NMTile, inputBufferNM->area = " << inputBufferNM->area << endl;
+//		cout << "HRR inside tile.cpp, NMTile, inputBufferNM->area = " << inputBufferNM->area << endl;
 		
 		*height = sqrt(area);
 		*width = area/(*height);
@@ -321,11 +323,11 @@ vector<double> TileCalculateArea(double numPE, double peSize, bool NMTile, doubl
 	
 		area += PEarea*numPE + accumulationCM->area + inputBufferCM->area + outputBufferCM->area + hTreeCM->area;
 
-		cout << "HRR inside tile.cpp, CMTile, inputBufferCM->area = " << inputBufferCM->area << endl;
-		cout << "HRR inside tile.cpp, CMTile, outputBufferCM->area = " << outputBufferCM->area << endl;
-		cout << "HRR inside tile.cpp, CMTile, hTreeCM->area = " << hTreeCM->area << endl;
-		cout << "HRR inside tile.cpp, CMTile, PEarea*numPE = " << PEarea*numPE << endl;
-		cout << "HRR inside tile.cpp, CMTile, ceil(sqrt((double)numPE))*PEheight = " << ceil(sqrt((double)numPE))*PEheight << endl;
+//		cout << "HRR inside tile.cpp, CMTile, inputBufferCM->area = " << inputBufferCM->area << endl;
+//		cout << "HRR inside tile.cpp, CMTile, outputBufferCM->area = " << outputBufferCM->area << endl;
+//		cout << "HRR inside tile.cpp, CMTile, hTreeCM->area = " << hTreeCM->area << endl;
+//		cout << "HRR inside tile.cpp, CMTile, PEarea*numPE = " << PEarea*numPE << endl;
+//		cout << "HRR inside tile.cpp, CMTile, ceil(sqrt((double)numPE))*PEheight = " << ceil(sqrt((double)numPE))*PEheight << endl;
 
 		*height = sqrt(area);
 		*width = area/(*height);
@@ -337,7 +339,7 @@ vector<double> TileCalculateArea(double numPE, double peSize, bool NMTile, doubl
 		areaResults.push_back(PEareaOther*numPE + inputBufferCM->area + outputBufferCM->area + areareLu + areasigmoid);
 		areaResults.push_back(PEareaArray*numPE);
 	}
-	cout << "HRR inside tile.cpp, area = " << area << endl;
+//	cout << "HRR inside tile.cpp, area = " << area << endl;
 	return areaResults;
 }
 

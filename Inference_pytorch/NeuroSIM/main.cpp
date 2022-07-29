@@ -76,9 +76,14 @@ int main(int argc, char * argv[]) {
 		cout << "ERROR!: Memory precision is even higher than synapse precision, please modify 'cellBit' in Param.cpp!" << endl;
 		param->cellBit = param->synapseBit;
 	}
+    if (param->memcelltype == 2) {
+        // RRAM
+        cout << "HRR operation mode = " << param->operationmode << ", cellBit = " << param->cellBit << ", Ron = " << param->resistanceOn << ", On/Off Ratio = " << param->onoffratio << ", memcelltype = " << param->memcelltype << ", cell size = " << param->heightInFeatureSize1T1R << " * " << param->widthInFeatureSize1T1R << endl;
+    } else if (param->memcelltype == 1) {
+        // SRAM
+        cout << "HRR operation mode = " << param->operationmode << ", cellBit = " << param->cellBit << ", Ron = " << param->resistanceOn << ", On/Off Ratio = " << param->onoffratio << ", memcelltype = " << param->memcelltype << ", cell size = " << param->heightInFeatureSizeSRAM << " * " << param->widthInFeatureSizeSRAM << endl;
+    }
 
-	cout << "HRR operation mode: " << param->operationmode << ", cellBit: " << param->cellBit << endl;
-	
 	/*** initialize operationMode as default ***/
 	param->conventionalParallel = 0;
 	param->conventionalSequential = 0;

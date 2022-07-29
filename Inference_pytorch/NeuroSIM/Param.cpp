@@ -55,11 +55,12 @@ using namespace std;
 
 Param::Param() {
 	/***************************************** user defined design options and parameters *****************************************/
-	operationmode = 1;     		// 1: conventionalSequential (Use several multi-bit RRAM as one synapse)
+	operationmode = 6;     		// 1: conventionalSequential (Use several multi-bit RRAM as one synapse)
 								// 2: conventionalParallel (Use several multi-bit RRAM as one synapse)
-	
+
+    // HRR
 	memcelltype = 2;        	// 1: cell.memCellType = Type::SRAM
-								// 2: cell.memCellType = Type::RRAM
+    							// 2: cell.memCellType = Type::RRAM
 								// 3: cell.memCellType = Type::FeFET
 	
 	accesstype = 1;         	// 1: cell.accessType = CMOS_access
@@ -153,6 +154,7 @@ Param::Param() {
 	// SRAM cell size at 14nm: 300F^2
 	// SRAM cell size at 10nm: 400F^2
 	// SRAM cell size at 7nm: 600F^2
+	// HRR
 	heightInFeatureSizeSRAM = 10;        // SRAM Cell height in feature size  
 	widthInFeatureSizeSRAM = 28;        // SRAM Cell width in feature size  
 	widthSRAMCellNMOS = 2;                            
@@ -161,13 +163,16 @@ Param::Param() {
 	minSenseVoltage = 0.1;
 	
 	/*** parameters for analog synaptic devices ***/
-	heightInFeatureSize1T1R = 4;        // 1T1R Cell height in feature size
+	// HRR
+	heightInFeatureSize1T1R = 5;        // 1T1R Cell height in feature size
 	widthInFeatureSize1T1R = 12;         // 1T1R Cell width in feature size
 	heightInFeatureSizeCrossbar = 2;    // Crossbar Cell height in feature size
 	widthInFeatureSizeCrossbar = 2;     // Crossbar Cell width in feature size
-	
+
+	// HRR
 	resistanceOn = 6e3;               // Ron resistance at Vr in the reported measurement data (need to recalculate below if considering the nonlinearity)
-	resistanceOff = 6e3*150;           // Roff resistance at Vr in the reported measurement dat (need to recalculate below if considering the nonlinearity)
+	onoffratio = 17;
+	resistanceOff = resistanceOn * onoffratio;           // Roff resistance at Vr in the reported measurement dat (need to recalculate below if considering the nonlinearity)
 	maxConductance = (double) 1/resistanceOn;
 	minConductance = (double) 1/resistanceOff;
 	

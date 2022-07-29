@@ -54,7 +54,7 @@ public:
 	bool globalBufferType, tileBufferType, peBufferType, chipActivation, reLu, novelMapping, pipeline, SARADC, currentMode, validated, synchronous;
 	int globalBufferCoreSizeRow, globalBufferCoreSizeCol, tileBufferCoreSizeRow, tileBufferCoreSizeCol;																								
 	
-	double clkFreq, featuresize, readNoise, resistanceOn, resistanceOff, maxConductance, minConductance;
+	double clkFreq, featuresize, readNoise, resistanceOn, onoffratio, resistanceOff, maxConductance, minConductance;
 	int temp, technode, wireWidth, multipleCells;
 	double maxNumLevelLTP, maxNumLevelLTD, readVoltage, readPulseWidth, writeVoltage;
 	double accessVoltage, resistanceAccess;

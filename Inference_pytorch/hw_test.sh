@@ -15,4 +15,10 @@ cd ..
 # test
 time=`date +"%Y-%m-%d %T"`
 
-sh ./layer_record_vgg_cifar10_binary/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${time}.txt 2>&1
+#model='vgg_cifar10_binary'
+model='alexnet_binary'
+operationmode=6
+cellBit=1
+technode="22nm RRAM (Intel)"
+
+sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_${time}.txt 2>&1

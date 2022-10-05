@@ -14,7 +14,7 @@ def Neural_Sim(self, input, output):
     global model_n, FP
 
     print("quantize layer, input: ", self.name)
-    print("input size: ", input[0].size())
+    # print("input size: ", input[0].size())
     input_file_name = './layer_record_' + str(model_n) + '/input' + str(self.name) + '.csv'
     weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(self.name) + '.csv'
     f = open('./layer_record_' + str(model_n) + '/trace_command.sh', "a")
@@ -160,6 +160,6 @@ def hardware_evaluation(model, wl_weight, wl_activation, model_name, mode):
 
     for i, layer in enumerate(model.modules()):
         if isinstance(layer, (FConv2d, QConv2d, nn.Conv2d)) or isinstance(layer, (FLinear, QLinear, nn.Linear)):
-            print("inside hardware_evaluation, layer: ", layer)
+            # print("inside hardware_evaluation, layer: ", layer)
             hook_handle_list.append(layer.register_forward_hook(Neural_Sim))
     return hook_handle_list

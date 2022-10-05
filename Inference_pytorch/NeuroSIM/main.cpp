@@ -78,10 +78,10 @@ int main(int argc, char * argv[]) {
 	}
     if (param->memcelltype == 2) {
         // RRAM
-        cout << "HRR operation mode = " << param->operationmode << ", cellBit = " << param->cellBit << ", Ron = " << param->resistanceOn << ", On/Off Ratio = " << param->onoffratio << ", memcelltype = " << param->memcelltype << ", cell size = " << param->heightInFeatureSize1T1R << " * " << param->widthInFeatureSize1T1R << endl;
+        cout << "HRR operation mode = " << param->operationmode << ", cellBit = " << param->cellBit << ", Ron = " << param->resistanceOn << ", On/Off Ratio = " << param->onoffratio << ", memcelltype = " << param->memcelltype << ", cell size = " << param->heightInFeatureSize1T1R << " * " << param->widthInFeatureSize1T1R << ", pipeline = " << param->pipeline << endl;
     } else if (param->memcelltype == 1) {
         // SRAM
-        cout << "HRR operation mode = " << param->operationmode << ", cellBit = " << param->cellBit << ", Ron = " << param->resistanceOn << ", On/Off Ratio = " << param->onoffratio << ", memcelltype = " << param->memcelltype << ", cell size = " << param->heightInFeatureSizeSRAM << " * " << param->widthInFeatureSizeSRAM << endl;
+        cout << "HRR operation mode = " << param->operationmode << ", cellBit = " << param->cellBit << ", Ron = " << param->resistanceOn << ", On/Off Ratio = " << param->onoffratio << ", memcelltype = " << param->memcelltype << ", cell size = " << param->heightInFeatureSizeSRAM << " * " << param->widthInFeatureSizeSRAM << ", pipeline = " << param->pipeline << endl;
     }
 
 	/*** initialize operationMode as default ***/

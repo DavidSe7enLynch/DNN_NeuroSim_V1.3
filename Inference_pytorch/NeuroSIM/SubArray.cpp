@@ -180,12 +180,20 @@ void SubArray::Initialize(int _numRow, int _numCol, double _unitWireRes){  //ini
 		} else if (BNNsequentialMode || XNORsequentialMode) {
 			wlDecoder.Initialize(REGULAR_ROW, (int)ceil(log2(numRow)), false, false);
 			senseAmp.Initialize(numCol, false, cell.minSenseVoltage, lengthRow/numCol, clkFreq, numReadCellPerOperationNeuro);
-			int adderBit = (int)ceil(log2(numRow)) + avgWeightBit;	
+			if (numColMuxed>1) {
+                mux.Initialize(ceil(numCol/numColMuxed), numColMuxed, resCellAccess/numRow/2, FPGA);
+                muxDecoder.Initialize(REGULAR_ROW, (int)ceil(log2(numColMuxed)), true, false);
+            }
+			int adderBit = (int)ceil(log2(numRow)) + avgWeightBit;
 			int numAdder = numCol/numCellPerSynapse;
 			dff.Initialize((adderBit+1)*numAdder, clkFreq);	
 			adder.Initialize(adderBit, numAdder, clkFreq);
 		} else if (BNNparallelMode || XNORparallelMode) {
 			wlSwitchMatrix.Initialize(ROW_MODE, numRow, resRow, true, false, activityRowRead, activityColWrite, numWriteCellPerOperationMemory, numWriteCellPerOperationNeuro, 1, clkFreq);
+			if (numColMuxed>1) {
+                mux.Initialize(ceil(numCol/numColMuxed), numColMuxed, resCellAccess/numRow/2, FPGA);
+                muxDecoder.Initialize(REGULAR_ROW, (int)ceil(log2(numColMuxed)), true, false);
+            }
 			if (SARADC) {
 				sarADC.Initialize(numCol/numColMuxed, levelOutput, clkFreq, numReadCellPerOperationNeuro);
 			} else {
@@ -413,6 +421,12 @@ void SubArray::CalculateArea() {  //calculate layout area for total design
 				height = precharger.height + sramWriteDriver.height + heightArray + senseAmp.height + adder.height + dff.height;
 				width = wlDecoder.width + widthArray;
 				area = height * width;
+				if (numColMuxed>1) {
+                    mux.CalculateArea(NULL, widthArray, NONE);
+                    muxDecoder.CalculateArea(NULL, NULL, NONE);
+                    double minMuxHeight = MAX(muxDecoder.height, mux.height);
+                    mux.CalculateArea(minMuxHeight, widthArray, OVERRIDE);
+                }
 				usedArea = areaArray + wlDecoder.area + precharger.area + sramWriteDriver.area + senseAmp.area + adder.area + dff.area;
 				emptyArea = area - usedArea;
 			} else if (BNNparallelMode || XNORparallelMode) {
@@ -427,6 +441,12 @@ void SubArray::CalculateArea() {  //calculate layout area for total design
 				height = precharger.height + sramWriteDriver.height + heightArray + multilevelSenseAmp.height + multilevelSAEncoder.height + sarADC.height;
 				width = wlSwitchMatrix.width + widthArray;
 				area = height * width;
+				if (numColMuxed>1) {
+                    mux.CalculateArea(NULL, widthArray, NONE);
+                    muxDecoder.CalculateArea(NULL, NULL, NONE);
+                    double minMuxHeight = MAX(muxDecoder.height, mux.height);
+                    mux.CalculateArea(minMuxHeight, widthArray, OVERRIDE);
+                }
 				usedArea = areaArray + wlSwitchMatrix.area + precharger.area + sramWriteDriver.area + multilevelSenseAmp.area + multilevelSAEncoder.area + sarADC.area;
 				emptyArea = area - usedArea;
 			}
@@ -573,7 +593,11 @@ void SubArray::CalculateArea() {  //calculate layout area for total design
 				height = ((cell.writeVoltage > 1.5)==true? (sllevelshifter.height):0) + slSwitchMatrix.height + heightArray + mux.height + multilevelSenseAmp.height + multilevelSAEncoder.height + sarADC.height;
 				width = MAX( ((cell.writeVoltage > 1.5)==true? (wllevelshifter.width + bllevelshifter.width):0) + wlNewSwitchMatrix.width + wlSwitchMatrix.width, muxDecoder.width) + widthArray;
 				area = height * width;
-				usedArea = areaArray + ((cell.writeVoltage > 1.5)==true? (wllevelshifter.area + bllevelshifter.area + sllevelshifter.area):0) + wlSwitchMatrix.area + wlNewSwitchMatrix.area + slSwitchMatrix.area + 
+				// HRR
+				areaADC = multilevelSenseAmp.area + multilevelSAEncoder.area + sarADC.area;
+                areaOther = ((cell.writeVoltage > 1.5)==true? (wllevelshifter.area + bllevelshifter.area + sllevelshifter.area):0) + wlNewSwitchMatrix.area + wlSwitchMatrix.area + slSwitchMatrix.area + ((numColMuxed > 1)==true? (mux.area + muxDecoder.area):0);
+				// HRR
+				usedArea = areaArray + ((cell.writeVoltage > 1.5)==true? (wllevelshifter.area + bllevelshifter.area + sllevelshifter.area):0) + wlSwitchMatrix.area + wlNewSwitchMatrix.area + slSwitchMatrix.area +
 							mux.area + multilevelSenseAmp.area + muxDecoder.area + multilevelSAEncoder.area + sarADC.area;
 				emptyArea = area - usedArea;
 			}
@@ -1126,6 +1150,10 @@ void SubArray::CalculatePower(const vector<double> &columnResistance) {
 				readDynamicEnergy += adder.readDynamicEnergy;
 				readDynamicEnergy += dff.readDynamicEnergy;
 				readDynamicEnergy += senseAmp.readDynamicEnergy;
+				// HRR
+				readDynamicEnergyADC = readDynamicEnergyArray + multilevelSenseAmp.readDynamicEnergy + multilevelSAEncoder.readDynamicEnergy + sarADC.readDynamicEnergy;
+                readDynamicEnergyOther = wlNewSwitchMatrix.readDynamicEnergy + wlSwitchMatrix.readDynamicEnergy + ( ((numColMuxed > 1)==true? (mux.readDynamicEnergy + muxDecoder.readDynamicEnergy):0) )/numReadPulse;
+				// HRR
 				
 				// Write				
 				// writeDynamicEnergy += wlDecoder.writeDynamicEnergy;
@@ -1160,6 +1188,10 @@ void SubArray::CalculatePower(const vector<double> &columnResistance) {
 				readDynamicEnergy += precharger.readDynamicEnergy;
 				readDynamicEnergy += readDynamicEnergyArray;
 				readDynamicEnergy += multilevelSenseAmp.readDynamicEnergy;
+				// HRR
+				readDynamicEnergyADC = readDynamicEnergyArray + multilevelSenseAmp.readDynamicEnergy + multilevelSAEncoder.readDynamicEnergy + sarADC.readDynamicEnergy;
+                readDynamicEnergyOther = wlNewSwitchMatrix.readDynamicEnergy + wlSwitchMatrix.readDynamicEnergy + ( ((numColMuxed > 1)==true? (mux.readDynamicEnergy + muxDecoder.readDynamicEnergy):0) )/numReadPulse;
+				// HRR
 				readDynamicEnergy += multilevelSAEncoder.readDynamicEnergy;
 				readDynamicEnergy += sarADC.readDynamicEnergy;
 				
@@ -1370,6 +1402,10 @@ void SubArray::CalculatePower(const vector<double> &columnResistance) {
 				readDynamicEnergy += adder.readDynamicEnergy;
 				readDynamicEnergy += dff.readDynamicEnergy;
 				readDynamicEnergy += readDynamicEnergyArray;
+				// HRR
+				readDynamicEnergyADC = readDynamicEnergyArray + multilevelSenseAmp.readDynamicEnergy + multilevelSAEncoder.readDynamicEnergy + sarADC.readDynamicEnergy;
+                readDynamicEnergyOther = wlNewSwitchMatrix.readDynamicEnergy + wlSwitchMatrix.readDynamicEnergy + ( ((numColMuxed > 1)==true? (mux.readDynamicEnergy + muxDecoder.readDynamicEnergy):0) )/numReadPulse;
+				// HRR
 
 				// Write				
 				// writeDynamicEnergyArray = writeDynamicEnergyArray;
@@ -1431,6 +1467,10 @@ void SubArray::CalculatePower(const vector<double> &columnResistance) {
 				readDynamicEnergy += wlSwitchMatrix.readDynamicEnergy;
 				readDynamicEnergy += ( ((numColMuxed > 1)==true? (mux.readDynamicEnergy + muxDecoder.readDynamicEnergy):0) )/numReadPulse;
 				readDynamicEnergy += multilevelSenseAmp.readDynamicEnergy;
+				// HRR
+				readDynamicEnergyADC = readDynamicEnergyArray + multilevelSenseAmp.readDynamicEnergy + multilevelSAEncoder.readDynamicEnergy + sarADC.readDynamicEnergy;
+                readDynamicEnergyOther = wlNewSwitchMatrix.readDynamicEnergy + wlSwitchMatrix.readDynamicEnergy + ( ((numColMuxed > 1)==true? (mux.readDynamicEnergy + muxDecoder.readDynamicEnergy):0) )/numReadPulse;
+				// HRR
 				readDynamicEnergy += multilevelSAEncoder.readDynamicEnergy;
 				readDynamicEnergy += readDynamicEnergyArray;
 				readDynamicEnergy += sarADC.readDynamicEnergy;

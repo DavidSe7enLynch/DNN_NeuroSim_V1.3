@@ -17,8 +17,17 @@ time=`date +"%Y-%m-%d %T"`
 
 #model='vgg_cifar10_binary'
 model='alexnet_binary'
+
 operationmode=6
 cellBit=1
+#technode="22nm SRAM 8T"
 technode="22nm RRAM (Intel)"
+#technode="22nm FeFET (GF)"
 
-sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_${time}.txt 2>&1
+pipeline="true"
+#pipeline="false"
+
+novelmapping="true"
+#novelmapping="false"
+
+sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_pipeline=${pipeline}_novelmapping=${novelmapping}_${time}.txt 2>&1

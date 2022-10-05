@@ -359,10 +359,12 @@ def validate(data_loader, model, criterion, epoch):
                 print("create hook list")
                 hook_handle_list = hook.hardware_evaluation(model, 1, 1, args.model)
             x, y = x.cuda(), y.cuda()
+            print(x.size())
             # print("x\n", x)
-            # print("y\n", y)
+            print("y\n", y)
             scores = model(x)
             _, predictions = scores.max(1)
+            print("pred\n", predictions)
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
             if i == 0:
@@ -370,11 +372,12 @@ def validate(data_loader, model, criterion, epoch):
                 hook.remove_hook_list(hook_handle_list)
 
     print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples) * 100:.2f}')
-    # return forward(data_loader, model, criterion, epoch,
-    #                training=False, optimizer=None)
+
     print("start testing hardware effects")
     call(["/bin/bash", './layer_record_' + str(args.model) + '/trace_command.sh'])
 
+    return forward(data_loader, model, criterion, epoch,
+                   training=False, optimizer=None)
 
 
 if __name__ == '__main__':

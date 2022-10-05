@@ -81,38 +81,63 @@ class BinarizeLinear(nn.Linear):
 
     def __init__(self, *kargs, hw=0, name="BinarizeLinear", **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
-        wl_input = 4
-        wl_activate = 4
-        wl_error = 4
+        # wl_input = 2
+        # wl_activate = 2
+        # wl_error = 2
+        # wl_weight = 1
+        # # inference = 1
+        # onoffratio = 10
+        # cellBit = 1
+        # subArray = 128
+        # ADCprecision = 5
+        # vari = 0
+        # t = 0
+        # v = 0
+        # detect = 0
+        # target = 0
+        # is_linear = 1
+        # self.wl_weight = wl_weight
+        # self.wl_activate = wl_activate
+        # self.wl_error = wl_error
+        # self.wl_input = wl_input
+        # self.hw = hw
+        # self.onoffratio = onoffratio
+        # self.cellBit = cellBit
+        # self.subArray = subArray
+        # self.ADCprecision = ADCprecision
+        # self.vari = vari
+        # self.t = t
+        # self.v = v
+        # self.detect = detect
+        # self.target = target
+        # self.is_linear = is_linear
+        # self.scale = wage_initializer.wage_init_(self.weight, self.wl_weight, factor=1.0)
+        # self.name = name
+
+        wl_input = 2
         wl_weight = 1
-        # inference = 1
         onoffratio = 10
-        cellBit = 1
         subArray = 128
-        ADCprecision = 5
         vari = 0
         t = 0
         v = 0
         detect = 0
         target = 0
-        is_linear = 1
         self.wl_weight = wl_weight
-        self.wl_activate = wl_activate
-        self.wl_error = wl_error
         self.wl_input = wl_input
         self.hw = hw
         self.onoffratio = onoffratio
-        self.cellBit = cellBit
         self.subArray = subArray
-        self.ADCprecision = ADCprecision
         self.vari = vari
         self.t = t
         self.v = v
         self.detect = detect
         self.target = target
-        self.is_linear = is_linear
-        self.scale = wage_initializer.wage_init_(self.weight, self.wl_weight, factor=1.0)
         self.name = name
+        self.scale = 1
+        self.is_linear = 1
+        self.ADCprecision = 5
+        self.cellBit = 1
 
     # hardware effect simulation
     # used only when inferencing
@@ -222,8 +247,8 @@ class BinarizeLinear(nn.Linear):
 
         bitWeight = int(self.wl_weight)
         bitActivation = int(self.wl_input)
-        print("bitActivation: ", bitActivation)
-        print("numcell: ", int(bitWeight / self.cellBit))
+        # print("bitActivation: ", bitActivation)
+        # print("numcell: ", int(bitWeight / self.cellBit))
 
         # if self.inference == 1 and self.model == 'VGG8':
         # set parameters for Hardware Inference
@@ -387,17 +412,17 @@ class BinarizeLinear(nn.Linear):
             self.weight.org = self.weight.data.clone()
         self.weight.data = Binarize(self.weight.org)
 
-        print("linear: is_input_bin = ", is_input_bin)
+        # print("linear: is_input_bin = ", is_input_bin)
         # print("bin weight: ", self.weight)
 
         # self.hw = 0
         if self.hw == 0:
             out = nn.functional.linear(input, self.weight)
-            print("linear finished")
+            # print("linear finished")
         else:
             out = self.neurosim_linear(input, is_input_bin)
-            print("nuerosim_linear finished: ", out)
-            print("linear out:", nn.functional.linear(input, self.weight))
+            # print("nuerosim_linear finished: ", out)
+            # print("linear out:", nn.functional.linear(input, self.weight))
             # print("after weight: ", self.weight)
 
         if not self.bias is None:
@@ -406,12 +431,27 @@ class BinarizeLinear(nn.Linear):
 
         return out
 
+    # # original version
+    # def forward(self, input):
+    #
+    #     # if input.size(1) != 784:
+    #     #     input.data=Binarize(input.data)
+    #     if not hasattr(self.weight,'org'):
+    #         self.weight.org=self.weight.data.clone()
+    #     # self.weight.data=Binarize(self.weight.org)
+    #     out = nn.functional.linear(input, self.weight)
+    #     if not self.bias is None:
+    #         self.bias.org=self.bias.data.clone()
+    #         out += self.bias.view(1, -1).expand_as(out)
+    #
+    #     return out
+
 
 class BinarizeConv2d(nn.Conv2d):
 
     def __init__(self, *kargs, hw=0, name="BinarizeConv2d", **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
-        wl_input = 4
+        wl_input = 2
         wl_weight = 1
         onoffratio = 10
         subArray = 128
@@ -622,21 +662,39 @@ class BinarizeConv2d(nn.Conv2d):
             self.weight.org = self.weight.data.clone()
         self.weight.data = Binarize(self.weight.org)
 
-        print("conv: is_input_bin = ", is_input_bin)
+        # print("conv: is_input_bin = ", is_input_bin)
         # self.hw = 0
         if self.hw == 0:
             out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
-            print("conv2d finished")
+            # print("conv2d finished")
         else:
             out = self.neurosim_conv2d(input)
-            print("neurosim_conv2d finished: ", out[0][0][0])
-            conv2d_out = nn.functional.conv2d(input, self.weight, None, self.stride,
-                                   self.padding, self.dilation, self.groups)
-            print("conv2d finished: ", conv2d_out[0][0][0])
+            # print("neurosim_conv2d finished: ", out[0][0][0])
+            # conv2d_out = nn.functional.conv2d(input, self.weight, None, self.stride,
+            #                        self.padding, self.dilation, self.groups)
+            # print("conv2d finished: ", conv2d_out[0][0][0])
 
         if not self.bias is None:
             self.bias.org = self.bias.data.clone()
             out += self.bias.view(1, -1, 1, 1).expand_as(out)
 
         return out
+
+    # # original version
+    # def forward(self, input):
+    #     # if input.size(1) != 3:
+    #         # input.data = Binarize(input.data)
+    #     if not hasattr(self.weight,'org'):
+    #         self.weight.org=self.weight.data.clone()
+    #     self.weight.data=Binarize(self.weight.org)
+    #
+    #     out = nn.functional.conv2d(input, self.weight, None, self.stride,
+    #                                self.padding, self.dilation, self.groups)
+    #
+    #     if not self.bias is None:
+    #         self.bias.org=self.bias.data.clone()
+    #         out += self.bias.view(1, -1, 1, 1).expand_as(out)
+    #
+    #     return out
+

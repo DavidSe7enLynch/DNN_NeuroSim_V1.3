@@ -13,6 +13,7 @@ class VGG(nn.Module):
         assert isinstance(features, nn.Sequential), type(features)
         self.features = features
         self.classifier = make_layers([('L', 8192, 1024),
+                                       ('L', 1024, 1024),
                                        ('L', 1024, num_classes)],
                                       args, logger)
 

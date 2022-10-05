@@ -97,7 +97,7 @@ assert args.model in ['VGG8', 'DenseNet40', 'ResNet18', 'Llayer'], args.model
 if args.model == 'VGG8':
     from models import VGG
 
-    model_path = './log/VGG8.pth'  # WAGE mode pretrained model
+    # model_path = './log/VGG8.pth'  # WAGE mode pretrained model
     # model_path = './log/default/ADCprecision=5/batch_size=64' \
     #              '/cellBit=4/dataset=cifar10/decreasing_lr=140,' \
     #              '180/detect=0/grad_scale=8/inference=0/is_linear=1/lr=0.01/mode=WAGE/model=VGG8/onoffratio=10/seed' \
@@ -108,6 +108,11 @@ if args.model == 'VGG8':
     #              '180/detect=0/grad_scale=8/inference=0/is_linear=1/lr=0.01/mode=WAGE/model=VGG8/onoffratio=10/seed' \
     #              '=117/subArray=128/t=0/target=0/v=0/vari=0/wl_activate=8/wl_error=8/wl_grad=8/wl_weight=8/best-140' \
     #              '.pth'
+    model_path = './log/default/ADCprecision=5/batch_size=64/cellBit=2' \
+                 '/dataset=cifar10/decreasing_lr=140,' \
+                 '180/detect=0/grad_scale=8/inference=1/is_linear=1/lr=0.01/mode=WAGE/model=VGG8/onoffratio=10/seed' \
+                 '=117/subArray=128/t=0/target=0/v=0/vari=0/wl_activate=4/wl_error=8/wl_grad=8/wl_weight=4/best-141' \
+                 '.pth'
     modelCF = VGG.vgg8(args=args, logger=logger, pretrained=model_path)
 elif args.model == 'DenseNet40':
     from models import DenseNet
@@ -164,7 +169,7 @@ else:
             data, target = data.cuda(), target.cuda()
         with torch.no_grad():
             data, target = Variable(data), Variable(target)
-            print("inference, i =", i)
+            # print("inference, i =", i)
             output = modelCF(data)
             test_loss_i = criterion(output, target)
             test_loss += test_loss_i.data

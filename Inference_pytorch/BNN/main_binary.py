@@ -78,7 +78,7 @@ parser.add_argument('--epochs', default=2500, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=16, type=int,
+parser.add_argument('-b', '--batch-size', default=4, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--optimizer', default='SGD', type=str, metavar='OPT',
                     help='optimizer function used')
@@ -88,7 +88,7 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
-parser.add_argument('--print-freq', '-p', default=10, type=int,
+parser.add_argument('--print-freq', '-p', default=10000, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -136,6 +136,7 @@ def main():
         model_config = dict(model_config, **literal_eval(args.model_config))
 
     model = model(hw=args.hw, **model_config)
+    print("line 139 correct\n")
     logging.info("created model with configuration: %s", model_config)
 
     # optionally resume from a checkpoint
@@ -194,7 +195,7 @@ def main():
     if args.evaluate:
         validate(val_loader, model, criterion, 0)
         return
-
+    print("line 198 correct\n")
     train_data = get_dataset(args.dataset, 'train', transform['train'])
     train_loader = torch.utils.data.DataLoader(
         train_data,
@@ -230,6 +231,8 @@ def main():
         # train for one epoch
         train_loss, train_prec1, train_prec5 = train(
             train_loader, model, criterion, epoch, optimizer)
+
+        print("line 235 correct\n")
 
         # evaluate on validation set
         val_loss, val_prec1, val_prec5 = validate(
@@ -359,12 +362,12 @@ def validate(data_loader, model, criterion, epoch):
                 print("create hook list")
                 hook_handle_list = hook.hardware_evaluation(model, 1, 1, args.model)
             x, y = x.cuda(), y.cuda()
-            print(x.size())
+            # print(x.size())
             # print("x\n", x)
-            print("y\n", y)
+            # print("y\n", y)
             scores = model(x)
             _, predictions = scores.max(1)
-            print("pred\n", predictions)
+            # print("pred\n", predictions)
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
             if i == 0:

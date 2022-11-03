@@ -3,14 +3,15 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 _DATASETS_MAIN_PATH = '/tmp/public_dataset/pytorch'
+_IMAGENET_PATH = '/work/zhang-x3/common/datasets/imagenet-pytorch'
 _dataset_path = {
     'cifar10': os.path.expanduser(os.path.join(_DATASETS_MAIN_PATH, 'CIFAR10')),
     'cifar100': os.path.expanduser(os.path.join(_DATASETS_MAIN_PATH, 'CIFAR100')),
     'stl10': os.path.join(_DATASETS_MAIN_PATH, 'STL10'),
     'mnist': os.path.join(_DATASETS_MAIN_PATH, 'MNIST'),
     'imagenet': {
-        'train': os.path.join(_DATASETS_MAIN_PATH, 'ImageNet/train'),
-        'val': os.path.join(_DATASETS_MAIN_PATH, 'ImageNet/val')
+        'train': os.path.join(_IMAGENET_PATH, 'train'),
+        'val': os.path.join(_IMAGENET_PATH, 'val')
     }
 }
 

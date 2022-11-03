@@ -89,5 +89,6 @@ class AlexNetOWT_BN(nn.Module):
 
 
 def alexnet_binary(hw=0, **kwargs):
-    num_classes = getattr(kwargs, 'num_classes', 10)
+    num_classes = getattr(kwargs, 'num_classes', 1000)
+    print("num_classes = ", num_classes)
     return AlexNetOWT_BN(num_classes, hw)

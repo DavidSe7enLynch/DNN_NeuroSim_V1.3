@@ -561,21 +561,6 @@ class BinarizeLinear(nn.Linear):
 
         return out
 
-    # # original version
-    # def forward(self, input):
-    #
-    #     # if input.size(1) != 784:
-    #     #     input.data=Binarize(input.data)
-    #     if not hasattr(self.weight,'org'):
-    #         self.weight.org=self.weight.data.clone()
-    #     # self.weight.data=Binarize(self.weight.org)
-    #     out = nn.functional.linear(input, self.weight)
-    #     if not self.bias is None:
-    #         self.bias.org=self.bias.data.clone()
-    #         out += self.bias.view(1, -1).expand_as(out)
-    #
-    #     return out
-
 
 class BinarizeConv2d(nn.Conv2d):
 
@@ -592,7 +577,7 @@ class BinarizeConv2d(nn.Conv2d):
         self.detect = 0
         self.target = 0
         self.name = name
-        self.ADCprecision = 5
+        self.ADCprecision = 10
         self.is_linear = 1
 
 
@@ -602,7 +587,7 @@ class BinarizeConv2d(nn.Conv2d):
 
     def quantizationADC(self, outputPartial, outputDummyPartial):
         # choose one from these two: linear or non-linear
-        if self.is_linear == 1:
+        if self.is_linear:
             # linear quantization
             outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
                                                               self.ADCprecision)
@@ -622,15 +607,16 @@ class BinarizeConv2d(nn.Conv2d):
         X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
         outputP = torch.zeros_like(output)
         outputD = torch.zeros_like(output)
-        remainder = wage_quantizer.Retention(X_decimal, self.t, self.v, self.detect,
-                                             self.target)
-        remainderQ = (upper - lower) * (
-                remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
+        remainder = wage_quantizer.Retention(X_decimal, self.t, self.v, self.detect, self.target)
+        remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
         outputPartial = nn.functional.conv2d(input, remainderQ * mask, self.bias, self.stride,
                                              self.padding,
                                              self.dilation, self.groups)
         outputDummyPartial = nn.functional.conv2d(input, dummyP * mask, self.bias, self.stride,
                                                   self.padding, self.dilation, self.groups)
+
+        outputPartial, outputDummyPartial = self.quantizationADC(outputPartial, outputDummyPartial)
+
         outputP = outputP + outputPartial * 1 * 2 / (1 - 1 / self.onoffratio)
         outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / self.onoffratio)
 
@@ -639,7 +625,10 @@ class BinarizeConv2d(nn.Conv2d):
         return output
 
     def firstLayer(self, input, output, upper, lower, mask, dummyP):
-        inputQ = torch.round((2 ** self.wl_input - 1) / 1 * (input - 0) + 0)
+        inputAbsMax = max(abs(torch.min(input).item()), abs(torch.max(input).item()))
+        expandRatio = (2 ** self.wl_input - 1) / inputAbsMax
+        # print("inputabsmax, expandratio = ", inputAbsMax, expandRatio)
+        inputQ = torch.round(expandRatio * input)
         outputIN = torch.zeros_like(output)
         for z in range(self.wl_input):
             inputB = torch.fmod(inputQ, 2)
@@ -661,14 +650,14 @@ class BinarizeConv2d(nn.Conv2d):
                                                       self.stride,
                                                       self.padding, self.dilation, self.groups)
 
-            outputPartialQ, outputDummyPartialQ = self.quantizationADC(outputPartial, outputDummyPartial)
+            outputPartial, outputDummyPartial = self.quantizationADC(outputPartial, outputDummyPartial)
 
-            outputP = outputP + outputPartialQ * 1 * 2 / (1 - 1 / self.onoffratio)
-            outputD = outputD + outputDummyPartialQ * 1 * 2 / (1 - 1 / self.onoffratio)
+            outputP = outputP + outputPartial * 1 * 2 / (1 - 1 / self.onoffratio)
+            outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / self.onoffratio)
 
             scalerIN = 2 ** z
             outputIN = outputIN + (outputP - outputD) * scalerIN
-        output = output + outputIN / (2 ** self.wl_input)
+        output = output + outputIN / expandRatio
         return output
 
     def neurosim_conv2d(self, input):
@@ -691,65 +680,23 @@ class BinarizeConv2d(nn.Conv2d):
         # need to divide to different subArray
         numSubArray = math.ceil(self.weight.shape[1] / self.subArray)
 
-        print("weight size: ", self.weight.shape)
+        # print("weight size: ", self.weight.shape)
+        # print("is_linear: ", self.is_linear)
         for i in range(self.weight.shape[2]):
             for j in range(self.weight.shape[3]):
-                # cut into different subArrays
-                if numSubArray == 1:
+                for s in range(numSubArray):
                     mask = torch.zeros_like(self.weight)
-                    mask[:, :, i, j] = 1
+                    mask[:, (s * self.subArray):(s + 1) * self.subArray, i, j] = 1
                     if self.weight.shape[1] == 3:
-                        if i == 0 and j == 0:
-                            print("in numSubArray = 0, dim = 3");
+                        # if i == 0 and j == 0:
+                            # print("first layer, input = ", input[0][0][0][0])
                         # first layer, convert to binary sequence
                         output = self.firstLayer(input, output, upper, lower, mask, dummyP)
                     else:
-                        if i == 0 and j == 0:
-                            print("in numSubArray = 0, dim != 3")
+                        # if i == 0 and j == 0:
+                            # print("binary layer, input = ", input[0][0][0][0])
+                        # other binary layers
                         output = self.binaryLayer(input, output, upper, lower, mask, dummyP)
-                else:
-                    if i == 0 and j == 0:
-                        print("not in numSubArray = 0");
-                    for s in range(numSubArray):
-                        mask = torch.zeros_like(self.weight)
-                        mask[:, (s * self.subArray):(s + 1) * self.subArray, i, j] = 1
-                        # after get the spacial kernel, need to transfer floating weight [-1, 1] to binarized ones
-                        X_decimal = torch.round((2 ** self.wl_weight - 1) / 2 * (self.weight + 1) + 0) * mask
-                        outputSP = torch.zeros_like(output)
-                        outputD = torch.zeros_like(output)
-                        # for k in range(int(self.wl_weight / self.cellBit)):
-                        # remainder = torch.fmod(X_decimal, cellRange) * mask
-                        # retention
-                        remainder = wage_quantizer.Retention(X_decimal, self.t, self.v, self.detect,
-                                                             self.target)
-                        # X_decimal = torch.round((X_decimal - remainder) / cellRange) * mask
-                        # Now also consider weight has on/off ratio effects
-                        # Here remainder is the weight mapped to Hardware, so we introduce on/off ratio in this value
-                        # the range of remainder is [0, cellRange-1], we truncate it to [lower, upper]*(cellRange-1)
-                        # remainderQ = (upper - lower) * (remainder - 0) + (
-                        #         cellRange - 1) * lower  # weight cannot map to 0, but to Gmin
-                        remainderQ = (upper - lower) * (remainder - 0) + 1 * lower  # weight cannot map to 0, but to Gmin
-                        # remainderQ = remainderQ + remainderQ * torch.normal(0.,
-                        #                                                     torch.full(remainderQ.size(),
-                        #                                                                self.vari,
-                        #                                                                device='cuda'))
-                        outputPartial = nn.functional.conv2d(input, remainderQ * mask, self.bias, self.stride,
-                                                 self.padding, self.dilation, self.groups)
-                        outputDummyPartial = nn.functional.conv2d(input, dummyP * mask, self.bias, self.stride,
-                                                      self.padding, self.dilation, self.groups)
-                        # Add ADC quanization effects here !!!
-
-                        # scaler = cellRange ** k
-                        # outputSP = outputSP + outputPartialQ * scaler * 2 / (1 - 1 / onoffratio)
-                        # outputD = outputD + outputDummyPartialQ * scaler * 2 / (1 - 1 / onoffratio)
-                        outputSP = outputSP + outputPartial * 1 * 2 / (1 - 1 / onoffratio)
-                        outputD = outputD + outputDummyPartial * 1 * 2 / (1 - 1 / onoffratio)
-
-                        # !!! Important !!! the dummy need to be multiplied by a ratio
-                        outputSP = outputSP - outputD  # minus dummy column
-                        output = output + outputSP
-
-        # output = output / (2 ** self.wl_weight)  # since weight range was convert from [-1, 1] to [-256, 256]
         return output
 
     def forward(self, input):
@@ -779,21 +726,3 @@ class BinarizeConv2d(nn.Conv2d):
             out += self.bias.view(1, -1, 1, 1).expand_as(out)
 
         return out
-
-    # # original version
-    # def forward(self, input):
-    #     # if input.size(1) != 3:
-    #         # input.data = Binarize(input.data)
-    #     if not hasattr(self.weight,'org'):
-    #         self.weight.org=self.weight.data.clone()
-    #     self.weight.data=Binarize(self.weight.org)
-    #
-    #     out = nn.functional.conv2d(input, self.weight, None, self.stride,
-    #                                self.padding, self.dilation, self.groups)
-    #
-    #     if not self.bias is None:
-    #         self.bias.org=self.bias.data.clone()
-    #         out += self.bias.view(1, -1, 1, 1).expand_as(out)
-    #
-    #     return out
-

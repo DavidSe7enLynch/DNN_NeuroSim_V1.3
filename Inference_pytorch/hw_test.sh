@@ -27,7 +27,9 @@ technode="22nm RRAM (Intel)"
 pipeline="true"
 #pipeline="false"
 
-novelmapping="true"
-#novelmapping="false"
+#novelmapping="true"
+novelmapping="false"
 
-sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_pipeline=${pipeline}_novelmapping=${novelmapping}_${time}.txt 2>&1
+ADCprecision="32"
+
+sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_ADCprecision=${ADCprecision}_pipeline=${pipeline}_novelmapping=${novelmapping}_${time}.txt 2>&1

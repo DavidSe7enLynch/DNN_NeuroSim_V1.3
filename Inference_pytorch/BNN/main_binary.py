@@ -78,7 +78,7 @@ parser.add_argument('--epochs', default=2500, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=4, type=int,
+parser.add_argument('-b', '--batch-size', default=8, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--optimizer', default='SGD', type=str, metavar='OPT',
                     help='optimizer function used')
@@ -95,9 +95,18 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
 parser.add_argument('--hw', type=int, default=0)
+parser.add_argument('--ADCprec', type=int, default=10)
+parser.add_argument('--wl_input', type=int, default=8)
 
 # /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-17_17-36-26/model_best.pth.tar
 # /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar
+
+class HWargs:
+    def __init__(self, isHW, adcPrec, wlInput):
+        self.m_isHW = isHW
+        self.m_adcPrec = adcPrec
+        self.m_wlInput = wlInput
+
 
 def main():
     global args, best_prec1
@@ -135,7 +144,9 @@ def main():
     if args.model_config is not '':
         model_config = dict(model_config, **literal_eval(args.model_config))
 
-    model = model(hw=args.hw, **model_config)
+    hwArgs = HWargs(args.hw, args.ADCprec, args.wl_input)
+
+    model = model(hwArgs, **model_config)
     print("line 139 correct\n")
     logging.info("created model with configuration: %s", model_config)
 
@@ -297,6 +308,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=Non
         target_var = Variable(target)
 
         # compute output
+        # print("input_var: \n", input_var)
         output = model(input_var)
         loss = criterion(output, target_var)
         if type(output) is list:
@@ -376,8 +388,8 @@ def validate(data_loader, model, criterion, epoch):
 
     print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples) * 100:.2f}')
 
-    print("start testing hardware effects")
-    call(["/bin/bash", './layer_record_' + str(args.model) + '/trace_command.sh'])
+    # print("start testing hardware effects")
+    # call(["/bin/bash", './layer_record_' + str(args.model) + '/trace_command.sh'])
 
     return forward(data_loader, model, criterion, epoch,
                    training=False, optimizer=None)

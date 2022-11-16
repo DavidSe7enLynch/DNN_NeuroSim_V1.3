@@ -191,9 +191,13 @@ int main(int argc, char * argv[]) {
 		numComputation += 2*(netStructure[i][0] * netStructure[i][1] * netStructure[i][2] * netStructure[i][3] * netStructure[i][4] * netStructure[i][5]);
 	}
 
+    cout << "main, 194" << endl;
+
 	ChipInitialize(inputParameter, tech, cell, netStructure, markNM, numTileEachLayer,
 					numPENM, desiredNumTileNM, desiredPESizeNM, desiredNumTileCM, desiredTileSizeCM, desiredPESizeCM, numTileRow, numTileCol);
-			
+
+	cout << "main, 199" << endl;
+
 	double chipHeight, chipWidth, chipArea, chipAreaIC, chipAreaADC, chipAreaAccum, chipAreaOther, chipAreaArray;
 	double CMTileheight = 0;
 	double CMTilewidth = 0;
@@ -204,7 +208,7 @@ int main(int argc, char * argv[]) {
 //	cout << "HRR inside main.cpp, chipAreaResults starting, chipHeight = " << chipHeight << ", chipWidth = " << chipWidth << endl;
 	chipAreaResults = ChipCalculateArea(inputParameter, tech, cell, desiredNumTileNM, numPENM, desiredPESizeNM, desiredNumTileCM, desiredTileSizeCM, desiredPESizeCM, numTileRow, 
 					&chipHeight, &chipWidth, &CMTileheight, &CMTilewidth, &NMTileheight, &NMTilewidth);
-//	cout << "HRR inside main.cpp, chipAreaResults calculated" << endl;
+	cout << "HRR inside main.cpp, chipAreaResults calculated" << endl;
 	chipArea = chipAreaResults[0];
 	chipAreaIC = chipAreaResults[1];
 	chipAreaADC = chipAreaResults[2];
@@ -245,7 +249,9 @@ int main(int argc, char * argv[]) {
 	double coreEnergyADC = 0;
 	double coreEnergyAccum = 0;
 	double coreEnergyOther = 0;
-	
+
+	cout << "main, 253" << endl;
+
 	if (param->synchronous){
 		// calculate clkFreq
 		for (int i=0; i<netStructure.size(); i++) {		

@@ -24,7 +24,7 @@ hw=1
 
 #ADCprecision_array=(6 7 8 9)
 ADCprec=7
-wl_input=6
+wl_input=3
 
 # vgg cifar10
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar"
@@ -52,7 +52,8 @@ echo "====start==== || ${model} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${
 # run in parallel
 python main_binary.py --hw ${hw} --ADCprec ${ADCprec} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path} > ./test/${date}/inferencelogHRRmodel=${model}_dataset=${dataset}_hw=${hw}_ADCprec=${ADCprec}_wl_input=${wl_input}_${time}.txt 2>&1
 
-#cp -r ./layer_record_alexnet_binary ..
+rm -rf ../layer_record_alexnet_binary
+cp -r ./layer_record_alexnet_binary ..
 
 time=$(date +"%Y-%m-%d %T")
 echo "=====end===== || ${model} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${wl_input} || ${time}"

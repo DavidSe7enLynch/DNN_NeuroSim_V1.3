@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torchvision.transforms as transforms
 import math
 from .binarized_modules import BinarizeLinear, BinarizeConv2d
 
@@ -10,13 +9,6 @@ def Binaryconv3x3(in_planes, out_planes, hwArgs, nameNum, stride=1):
     "3x3 convolution with padding"
     return BinarizeConv2d(in_planes, out_planes, hwArgs=hwArgs, name="Conv" + str(nameNum) + "_", kernel_size=3,
                           stride=stride, padding=1, bias=False), nameNum + 1
-
-
-def conv3x3(in_planes, out_planes, hwArgs, nameNum, stride=1):
-    "3x3 convolution with padding"
-    return nn.Conv2d(in_planes, out_planes, hwArgs=hwArgs, name="Conv" + str(nameNum) + "_", kernel_size=3,
-                     stride=stride, padding=1, bias=False), nameNum + 1
-
 
 def init_model(model):
     for m in model.modules():
@@ -43,7 +35,7 @@ class BasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.downsample = downsample
-        self.do_bntan = do_bntan;
+        self.do_bntan = do_bntan
         self.stride = stride
 
     def forward(self, x):
@@ -58,7 +50,7 @@ class BasicBlock(nn.Module):
 
         if self.downsample is not None:
             if residual.data.max() > 1:
-                import pdb;
+                import pdb
                 pdb.set_trace()
             residual = self.downsample(residual)
 
@@ -74,7 +66,7 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, hwArgs, nameNum, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, hwArgs, nameNum, stride=1, downsample=None, do_bntan=True):
         super(Bottleneck, self).__init__()
         self.conv1 = BinarizeConv2d(inplanes, planes, hwArgs=hwArgs, name="Conv" + str(nameNum) + "_", kernel_size=1,
                                     bias=False)
@@ -90,11 +82,12 @@ class Bottleneck(nn.Module):
         self.bn3 = nn.BatchNorm2d(planes * 4)
         self.tanh = nn.Hardtanh(inplace=True)
         self.downsample = downsample
+        self.do_bntan = do_bntan
         self.stride = stride
 
     def forward(self, x):
         residual = x
-        import pdb;
+        import pdb
         pdb.set_trace()
         out = self.conv1(x)
         out = self.bn1(out)
@@ -111,9 +104,9 @@ class Bottleneck(nn.Module):
             residual = self.downsample(x)
 
         out += residual
-        if self.do_bntan:
-            out = self.bn2(out)
-            out = self.tanh2(out)
+        # if self.do_bntan:
+        #     out = self.bn2(out)
+        #     out = self.tanh2(out)
 
         return out
 
@@ -133,15 +126,17 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(
-            block(self.inplanes, planes, hwArgs=hwArgs, nameNum=nameNum, stride=stride, downsample=downsample))
-        updateNameNum(block, nameNum)
+        blk = block(self.inplanes, planes, hwArgs=hwArgs, nameNum=nameNum, stride=stride, downsample=downsample)
+        layers.append(blk)
+        nameNum = updateNameNum(blk, nameNum)
         self.inplanes = planes * block.expansion
         for i in range(1, blocks - 1):
-            layers.append(block(self.inplanes, planes, hwArgs=hwArgs, nameNum=nameNum))
-            updateNameNum(block, nameNum)
-        layers.append(block(self.inplanes, planes, hwArgs=hwArgs, nameNum=nameNum, do_bntan=do_bntan))
-        updateNameNum(block, nameNum)
+            blk = block(self.inplanes, planes, hwArgs=hwArgs, nameNum=nameNum)
+            layers.append(blk)
+            nameNum = updateNameNum(blk, nameNum)
+        blk = block(self.inplanes, planes, hwArgs=hwArgs, nameNum=nameNum, do_bntan=do_bntan)
+        layers.append(blk)
+        nameNum = updateNameNum(blk, nameNum)
         return nn.Sequential(*layers), nameNum
 
     def forward(self, x):
@@ -241,6 +236,7 @@ def resnet_binary(hwArgs, **kwargs):
     if dataset == 'imagenet':
         num_classes = num_classes or 1000
         depth = depth or 50
+        depth = 18
         if depth == 18:
             return ResNet_imagenet(hwArgs, num_classes=num_classes,
                                    block=BasicBlock, layers=[2, 2, 2, 2])

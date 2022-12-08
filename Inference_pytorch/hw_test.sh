@@ -30,6 +30,6 @@ pipeline="true"
 #novelmapping="true"
 novelmapping="false"
 
-ADCprecision="32"
+ADCprecision="128"
 
 sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_ADCprecision=${ADCprecision}_pipeline=${pipeline}_novelmapping=${novelmapping}_${time}.txt 2>&1

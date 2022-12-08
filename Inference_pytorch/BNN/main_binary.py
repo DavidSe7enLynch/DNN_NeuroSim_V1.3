@@ -363,8 +363,8 @@ def validate(data_loader, model, criterion, epoch):
     # switch to evaluate mode
     model.eval()
     # see model
-    # for i, param in enumerate(model.parameters()):
-    #     print(i, param)
+    for i, param in enumerate(model.parameters()):
+        print(i, param)
     # test accuracy
     num_correct = 0
     num_samples = 0

@@ -1,2 +1,0 @@
-2022-06-15 16:08:16 - INFO - saving to ./results/2022-06-15_16-08-16
-2022-06-15 16:08:16 - DEBUG - run arguments: Namespace(results_dir='./results', save='2022-06-15_16-08-16', dataset='imagenet', model='alexnet', input_size=None, model_config='', type='torch.cuda.FloatTensor', gpus='0', workers=8, epochs=2500, start_epoch=0, batch_size=256, optimizer='SGD', lr=0.1, momentum=0.9, weight_decay=0.0001, print_freq=10, resume='', evaluate=None)

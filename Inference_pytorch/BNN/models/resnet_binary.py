@@ -76,10 +76,10 @@ class Bottleneck(nn.Module):
                                     stride=stride, padding=1, bias=False)
         nameNum += 1
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = BinarizeConv2d(planes, planes * 4, hwArgs=hwArgs, name="Conv" + str(nameNum) + "_", kernel_size=1,
+        self.conv3 = BinarizeConv2d(planes, planes * self.expansion, hwArgs=hwArgs, name="Conv" + str(nameNum) + "_", kernel_size=1,
                                     bias=False)
         nameNum += 1
-        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.bn3 = nn.BatchNorm2d(planes * self.expansion)
         self.tanh = nn.Hardtanh(inplace=True)
         self.downsample = downsample
         self.do_bntan = do_bntan
@@ -139,6 +139,7 @@ class ResNet(nn.Module):
         nameNum = updateNameNum(blk, nameNum)
         return nn.Sequential(*layers), nameNum
 
+    # for cifar10, override in imagenet version
     def forward(self, x):
         x = self.conv1(x)
         x = self.maxpool(x)
@@ -169,13 +170,19 @@ class ResNet_imagenet(ResNet):
         self.conv1 = BinarizeConv2d(3, 64, hwArgs=hwArgs, name="Conv0_", kernel_size=7, stride=2, padding=3,
                                     bias=False)
         self.bn1 = nn.BatchNorm2d(64)
-        self.tanh = nn.Hardtanh(inplace=True)
+        self.tanh1 = nn.Hardtanh(inplace=True)
+        self.tanh2 = nn.Hardtanh(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1, nameNum = self._make_layer(block, 64, layers[0], hwArgs=hwArgs, nameNum=1)
         self.layer2, nameNum = self._make_layer(block, 128, layers[1], hwArgs=hwArgs, nameNum=nameNum, stride=2)
         self.layer3, nameNum = self._make_layer(block, 256, layers[2], hwArgs=hwArgs, nameNum=nameNum, stride=2)
         self.layer4, nameNum = self._make_layer(block, 512, layers[3], hwArgs=hwArgs, nameNum=nameNum, stride=2)
         self.avgpool = nn.AvgPool2d(7)
+
+        self.bn2 = nn.BatchNorm1d(512 * block.expansion)
+        self.bn3 = nn.BatchNorm1d(num_classes)
+        self.logsoftmax = nn.LogSoftmax()
+
         self.fc = BinarizeLinear(512 * block.expansion, num_classes, hwArgs=hwArgs, name="FC0_")
 
         init_model(self)
@@ -203,24 +210,17 @@ class ResNet_cifar10(ResNet):
         self.bn1 = nn.BatchNorm2d(16 * self.inflate)
         self.tanh1 = nn.Hardtanh(inplace=True)
         self.tanh2 = nn.Hardtanh(inplace=True)
-        self.layer1 = self._make_layer(block, 16 * self.inflate, n)
-        self.layer2 = self._make_layer(block, 32 * self.inflate, n, stride=2)
-        self.layer3 = self._make_layer(block, 64 * self.inflate, n, stride=2, do_bntan=False)
+        self.layer1, nameNum = self._make_layer(block, 16 * self.inflate, n, hwArgs=hwArgs, nameNum=1)
+        self.layer2, nameNum = self._make_layer(block, 32 * self.inflate, n, hwArgs=hwArgs, nameNum=nameNum, stride=2)
+        self.layer3, nameNum = self._make_layer(block, 64 * self.inflate, n, hwArgs=hwArgs, nameNum=nameNum, stride=2, do_bntan=False)
         self.layer4 = lambda x: x
         self.avgpool = nn.AvgPool2d(8)
         self.bn2 = nn.BatchNorm1d(64 * self.inflate)
-        self.bn3 = nn.BatchNorm1d(10)
+        self.bn3 = nn.BatchNorm1d(num_classes)
         self.logsoftmax = nn.LogSoftmax()
-        self.fc = BinarizeLinear(64 * self.inflate, num_classes)
+        self.fc = BinarizeLinear(64 * self.inflate, num_classes, hwArgs=hwArgs, name="FC0_")
 
         init_model(self)
-        # self.regime = {
-        #    0: {'optimizer': 'SGD', 'lr': 1e-1,
-        #        'weight_decay': 1e-4, 'momentum': 0.9},
-        #    81: {'lr': 1e-4},
-        #    122: {'lr': 1e-5, 'weight_decay': 0},
-        #    164: {'lr': 1e-6}
-        # }
         self.regime = {
             0: {'optimizer': 'Adam', 'lr': 5e-3},
             101: {'lr': 1e-3},
@@ -256,7 +256,7 @@ def resnet_binary(hwArgs, **kwargs):
     elif dataset == 'cifar10':
         num_classes = num_classes or 10
         depth = depth or 18
-        return ResNet_cifar10(num_classes=num_classes,
+        return ResNet_cifar10(hwArgs, num_classes=num_classes,
                               block=BasicBlock, depth=depth)
 
 

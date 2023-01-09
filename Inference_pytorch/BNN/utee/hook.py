@@ -14,8 +14,8 @@ from utee import float_quantizer
 def Neural_Sim(self, input, output):
     global model_n, FP
 
-    print("quantize layer, input: ", self.name)
-    print("input size: ", input[0].size())
+    # print("quantize layer, input: ", self.name)
+    # print("input size: ", input[0].size())
     input_file_name = './layer_record_' + str(model_n) + '/input' + str(self.name) + '.csv'
     weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(self.name) + '.csv'
     f = open('./layer_record_' + str(model_n) + '/trace_command.sh', "a")
@@ -28,7 +28,7 @@ def Neural_Sim(self, input, output):
     # print(self.weight.shape)
     # print(len(self.weight.shape))
     # print(self.weight.shape[-1])
-    print("in neural_sim: wl_input: ", self.wl_input)
+    # print("in neural_sim: wl_input: ", self.wl_input)
     if len(self.weight.shape) > 2:
         k = self.weight.shape[-1]
         padding = self.padding
@@ -63,7 +63,7 @@ def write_matrix_activation_fc(input_matrix, fill_dimension, length, filename):
 
 def stretch_input(input_matrix, window_size=5, padding=(0, 0), stride=(1, 1)):
     input_shape = input_matrix.shape
-    print("in stretch input: ", input_shape, window_size, padding, stride)
+    # print("in stretch input: ", input_shape, window_size, padding, stride)
     i_range = int((input_shape[2] + 2 * padding[0] - window_size) / stride[0] + 1)
     j_range = int((input_shape[3] + 2 * padding[1] - window_size) / stride[1] + 1)
     item_num = i_range * j_range

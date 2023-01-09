@@ -78,7 +78,7 @@ parser.add_argument('--epochs', default=2500, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=8, type=int,
+parser.add_argument('-b', '--batch-size', default=100, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--optimizer', default='SGD', type=str, metavar='OPT',
                     help='optimizer function used')
@@ -95,7 +95,7 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
 parser.add_argument('--hw', type=int, default=0)
-parser.add_argument('--ADCprec', type=int, default=10)
+parser.add_argument('--ADCprec', type=int, default=7)
 parser.add_argument('--wl_input', type=int, default=8)
 
 # /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-17_17-36-26/model_best.pth.tar
@@ -147,7 +147,7 @@ def main():
     hwArgs = HWargs(args.hw, args.ADCprec, args.wl_input)
 
     model = model(hwArgs, **model_config)
-    print("line 139 correct\n")
+    # print("line 139 correct\n")
     logging.info("created model with configuration: %s", model_config)
 
     # optionally resume from a checkpoint
@@ -206,7 +206,7 @@ def main():
     if args.evaluate:
         validate(val_loader, model, criterion, 0)
         return
-    print("line 198 correct\n")
+    # print("line 198 correct\n")
     train_data = get_dataset(args.dataset, 'train', transform['train'])
     train_loader = torch.utils.data.DataLoader(
         train_data,
@@ -243,7 +243,7 @@ def main():
         train_loss, train_prec1, train_prec5 = train(
             train_loader, model, criterion, epoch, optimizer)
 
-        print("line 235 correct\n")
+        # print("line 235 correct\n")
 
         # evaluate on validation set
         val_loss, val_prec1, val_prec5 = validate(
@@ -363,16 +363,16 @@ def validate(data_loader, model, criterion, epoch):
     # switch to evaluate mode
     model.eval()
     # see model
-    for i, param in enumerate(model.parameters()):
-        print(i, param)
+    # for i, param in enumerate(model.parameters()):
+    #     print(i, param)
     # test accuracy
     num_correct = 0
     num_samples = 0
     with torch.no_grad():
         for i, (x, y) in enumerate(data_loader):
-            if i == 0:
-                print("create hook list")
-                hook_handle_list = hook.hardware_evaluation(model, 1, 1, args.model)
+            # if i == 0:
+            #     print("create hook list")
+            #     hook_handle_list = hook.hardware_evaluation(model, hwArgs.m_wlInput, 1, args.model)
             x, y = x.cuda(), y.cuda()
             # print(x.size())
             # print("x\n", x)
@@ -382,15 +382,17 @@ def validate(data_loader, model, criterion, epoch):
             # print("pred\n", predictions)
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
-            if i == 0:
-                print("remove hook list")
-                hook.remove_hook_list(hook_handle_list)
+            # if i == 0:
+            #     print("remove hook list")
+            #     hook.remove_hook_list(hook_handle_list)
 
     print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples) * 100:.2f}')
 
     # print("start testing hardware effects")
     # call(["/bin/bash", './layer_record_' + str(args.model) + '/trace_command.sh'])
 
+    if args.evaluate:
+        return
     return forward(data_loader, model, criterion, epoch,
                    training=False, optimizer=None)
 

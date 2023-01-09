@@ -16,7 +16,8 @@ cd ..
 time=`date +"%Y-%m-%d %T"`
 
 #model='vgg_cifar10_binary'
-model='alexnet_binary'
+#model='alexnet_binary'
+model='resnet_binary'
 
 operationmode=6
 cellBit=1

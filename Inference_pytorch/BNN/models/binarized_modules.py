@@ -79,7 +79,7 @@ def Quantize(tensor, quant_mode='det', params=None, numBits=8):
 
 class BinarizeLinear(nn.Linear):
 
-    def __init__(self, *kargs, hwArgs, name="BinarizeLinear", **kwargs):
+    def __init__(self, *kargs, hwArgs=None, name="BinarizeLinear", **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
         # wl_input = 2
         # wl_activate = 2
@@ -124,8 +124,16 @@ class BinarizeLinear(nn.Linear):
         detect = 0
         target = 0
         self.wl_weight = wl_weight
-        self.wl_input = hwArgs.m_wlInput
-        self.hw = hwArgs.m_isHW
+
+        if hwArgs:
+            self.wl_input = hwArgs.m_wlInput
+            self.hw = hwArgs.m_isHW
+            self.ADCprecision = hwArgs.m_adcPrec
+        else:
+            self.wl_input = 8
+            self.hw = 0
+            self.ADCprecision = 7
+
         self.onoffratio = onoffratio
         self.subArray = subArray
         self.vari = vari
@@ -136,7 +144,6 @@ class BinarizeLinear(nn.Linear):
         self.name = name
         self.scale = 1
         self.is_linear = 1
-        self.ADCprecision = hwArgs.m_adcPrec
         self.cellBit = 1
 
     # hardware effect simulation
@@ -564,11 +571,9 @@ class BinarizeLinear(nn.Linear):
 
 class BinarizeConv2d(nn.Conv2d):
 
-    def __init__(self, *kargs, hwArgs, name="BinarizeConv2d", **kwargs):
+    def __init__(self, *kargs, hwArgs=None, name="BinarizeConv2d", **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
         self.wl_weight = 1
-        self.wl_input = hwArgs.m_wlInput
-        self.hw = hwArgs.m_isHW
         self.onoffratio = 10
         self.subArray = 128
         self.vari = 0
@@ -577,8 +582,16 @@ class BinarizeConv2d(nn.Conv2d):
         self.detect = 0
         self.target = 0
         self.name = name
-        self.ADCprecision = hwArgs.m_adcPrec
         self.is_linear = 1
+
+        if hwArgs:
+            self.wl_input = hwArgs.m_wlInput
+            self.hw = hwArgs.m_isHW
+            self.ADCprecision = hwArgs.m_adcPrec
+        else:
+            self.wl_input = 8
+            self.hw = 0
+            self.ADCprecision = 7
 
 
         # middle results
@@ -718,8 +731,8 @@ class BinarizeConv2d(nn.Conv2d):
         else:
             out = self.neurosim_conv2d(input)
             # print("neurosim_conv2d finished: ", out.size(), out[0][0][0])
-            conv2d_out = nn.functional.conv2d(input, self.weight, None, self.stride,
-                                   self.padding, self.dilation, self.groups)
+            # conv2d_out = nn.functional.conv2d(input, self.weight, None, self.stride,
+            #                        self.padding, self.dilation, self.groups)
             # print("conv2d finished: ", conv2d_out.size(), conv2d_out[0][0][0])
 
         if not self.bias is None:

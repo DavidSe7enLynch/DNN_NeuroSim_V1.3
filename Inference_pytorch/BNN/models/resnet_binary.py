@@ -10,6 +10,11 @@ def Binaryconv3x3(in_planes, out_planes, hwArgs, nameNum, stride=1):
     return BinarizeConv2d(in_planes, out_planes, hwArgs=hwArgs, name="Conv" + str(nameNum) + "_", kernel_size=3,
                           stride=stride, padding=1, bias=False), nameNum + 1
 
+def conv3x3(in_planes, out_planes, stride=1):
+    "3x3 convolution with padding"
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                     padding=1, bias=False)
+
 def init_model(model):
     for m in model.modules():
         if isinstance(m, BinarizeConv2d):
@@ -104,9 +109,9 @@ class Bottleneck(nn.Module):
             residual = self.downsample(x)
 
         out += residual
-        # if self.do_bntan:
-        #     out = self.bn2(out)
-        #     out = self.tanh2(out)
+        if self.do_bntan:
+            out = self.bn3(out)
+            out = self.tanh(out)
 
         return out
 
@@ -167,8 +172,9 @@ class ResNet_imagenet(ResNet):
                  block=Bottleneck, layers=[3, 4, 23, 3]):
         super(ResNet_imagenet, self).__init__()
         self.inplanes = 64
-        self.conv1 = BinarizeConv2d(3, 64, hwArgs=hwArgs, name="Conv0_", kernel_size=7, stride=2, padding=3,
-                                    bias=False)
+        # self.conv1 = BinarizeConv2d(3, 64, hwArgs=hwArgs, name="Conv0_", kernel_size=7, stride=2, padding=3,
+        #                             bias=False)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.tanh1 = nn.Hardtanh(inplace=True)
         self.tanh2 = nn.Hardtanh(inplace=True)
@@ -183,7 +189,8 @@ class ResNet_imagenet(ResNet):
         self.bn3 = nn.BatchNorm1d(num_classes)
         self.logsoftmax = nn.LogSoftmax()
 
-        self.fc = BinarizeLinear(512 * block.expansion, num_classes, hwArgs=hwArgs, name="FC0_")
+        # self.fc = BinarizeLinear(512 * block.expansion, num_classes, hwArgs=hwArgs, name="FC0_")
+        self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         init_model(self)
         self.regime = {
@@ -203,9 +210,10 @@ class ResNet_cifar10(ResNet):
         self.inflate = 5
         self.inplanes = 16 * self.inflate
         n = int((depth - 2) / 6)
-        self.conv1 = BinarizeConv2d(3, 16 * self.inflate, hwArgs=hwArgs, name="Conv0_", kernel_size=3, stride=1,
-                                    padding=1,
-                                    bias=False)
+        # self.conv1, _ = BinarizeConv2d(3, 16 * self.inflate, hwArgs=hwArgs, name="Conv0_", kernel_size=3, stride=1,
+        #                             padding=1,
+        #                             bias=False)
+        self.conv1 = nn.Conv2d(3, 16 * self.inflate, kernel_size=3, stride=1, padding=1, bias=False)
         self.maxpool = lambda x: x
         self.bn1 = nn.BatchNorm2d(16 * self.inflate)
         self.tanh1 = nn.Hardtanh(inplace=True)

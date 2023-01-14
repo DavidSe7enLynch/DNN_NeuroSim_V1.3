@@ -16,8 +16,8 @@ cd ..
 time=`date +"%Y-%m-%d %T"`
 
 #model='vgg_cifar10_binary'
-#model='alexnet_binary'
-model='resnet_binary'
+model='alexnet_binary'
+#model='resnet_binary'
 
 operationmode=6
 cellBit=1
@@ -31,6 +31,6 @@ pipeline="true"
 #novelmapping="true"
 novelmapping="false"
 
-ADCprecision="128"
+ADCprecision="8"
 
 sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_ADCprecision=${ADCprecision}_pipeline=${pipeline}_novelmapping=${novelmapping}_${time}.txt 2>&1

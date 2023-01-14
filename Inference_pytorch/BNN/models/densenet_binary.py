@@ -28,7 +28,7 @@ class DenseLayer(nn.Module):
             drop_rate: float,
             hwArgs,
             nameNum,
-            memory_efficient: bool = False
+            memory_efficient: bool = True
     ) -> None:
         super().__init__()
         self.norm1 = nn.BatchNorm2d(num_input_features)
@@ -44,7 +44,10 @@ class DenseLayer(nn.Module):
         self.memory_efficient = memory_efficient
 
     def bn_function(self, inputs: List[Tensor]) -> Tensor:
-        concated_features = torch.cat(inputs, 1)
+        if len(inputs) > 1:
+            concated_features = torch.cat(inputs, 1)
+        else:
+            concated_features = inputs[0]
         bottleneck_output = self.conv1(self.tanh1(self.norm1(concated_features)))  # noqa: T484
         return bottleneck_output
 
@@ -171,7 +174,7 @@ class DenseNet(nn.Module):
             bn_size: int = 4,
             drop_rate: float = 0,
             num_classes: int = 1000,
-            memory_efficient: bool = False,
+            memory_efficient: bool = True,
     ) -> None:
 
         super().__init__()
@@ -179,16 +182,22 @@ class DenseNet(nn.Module):
 
         # First convolution
         self.features = nn.Sequential(
-            OrderedDict(
-                [
-                    ("conv0", BinaryConv(3, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
-                    # ("conv0", nn.Conv2d(3, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
-                    ("norm0", nn.BatchNorm2d(num_init_features)),
-                    ("tanh0", nn.Hardtanh(inplace=True)),
-                    ("pool0", nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
-                ]
-            )
+            # OrderedDict(
+            #     [
+            #         ("conv0", BinaryConv(3, num_init_features, kernel_size=7, hwArgs=hwArgs, nameNum=nameNum, stride=2, padding=3, bias=False)),
+            #         # ("conv0", nn.Conv2d(3, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+            #         ("norm0", nn.BatchNorm2d(num_init_features)),
+            #         ("tanh0", nn.Hardtanh(inplace=True)),
+            #         ("pool0", nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+            #     ]
+            # )
+            BinaryConv(3, num_init_features, kernel_size=7, hwArgs=hwArgs, nameNum=nameNum, stride=2, padding=3, bias=False)[0],
+            # ("conv0", nn.Conv2d(3, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+            nn.BatchNorm2d(num_init_features),
+            nn.Hardtanh(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
+        nameNum += 1
 
         # Each denseblock
         num_features = num_init_features
@@ -218,7 +227,7 @@ class DenseNet(nn.Module):
         # Linear layer
         # self.classifier = nn.Linear(num_features, num_classes)
         # need to modify to input nameNum, etc.
-        self.classifier = BinarizeLinear(num_features, num_classes)
+        self.classifier = BinarizeLinear(num_features, num_classes, hwArgs=hwArgs)
 
         # Official init from torch repo.
         for m in self.modules():
@@ -240,3 +249,7 @@ class DenseNet(nn.Module):
         out = self.classifier(out)
         return out
 
+def densenet_binary(hwArgs, **kwargs):
+    num_classes, depth, dataset = map(
+        kwargs.get, ['num_classes', 'depth', 'dataset'])
+    return DenseNet(hwArgs, 0)

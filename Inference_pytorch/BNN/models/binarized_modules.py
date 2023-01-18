@@ -708,15 +708,19 @@ class BinarizeConv2d(nn.Conv2d):
         return output
 
     def forward(self, input):
-        if input.size(1) != 3:
-            input.data = Binarize(input.data)
-        if not hasattr(self.weight, 'org'):
-            self.weight.org = self.weight.data.clone()
-        self.weight.data = Binarize(self.weight.org)
+        # if input.size(1) != 3:
+        #     input.data = Binarize(input.data)
+        # if not hasattr(self.weight, 'org'):
+        #     self.weight.org = self.weight.data.clone()
+        # self.weight.data = Binarize(self.weight.org)
 
         if self.hw == 0:
-            out = nn.functional.conv2d(input, self.weight, None, self.stride,
+            if input.size(1) != 3:
+                out = nn.functional.conv2d(self.binarize(input), self.binarize(self.weight), None, self.stride,
                                    self.padding, self.dilation, self.groups)
+            else:
+                out = nn.functional.conv2d(input, self.binarize(self.weight), None, self.stride,
+                                           self.padding, self.dilation, self.groups)
         else:
             out = self.neurosim_conv2d(input)
             # print("neurosim_conv2d finished: ", out.size(), out[0][0][0])
@@ -724,8 +728,8 @@ class BinarizeConv2d(nn.Conv2d):
             #                        self.padding, self.dilation, self.groups)
             # print("conv2d finished: ", conv2d_out.size(), conv2d_out[0][0][0])
 
-        if not self.bias is None:
-            self.bias.org = self.bias.data.clone()
-            out += self.bias.view(1, -1, 1, 1).expand_as(out)
+        # if not self.bias is None:
+        #     self.bias.org = self.bias.data.clone()
+        #     out += self.bias.view(1, -1, 1, 1).expand_as(out)
 
         return out

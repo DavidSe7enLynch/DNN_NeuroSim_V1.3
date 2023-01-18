@@ -19,7 +19,7 @@ cd ${BNNPath}
 model="resnet_binary"
 #model="resnet"
 #model="resnet_binary_orig"
-model="resnet_binary_1adrianb"
+#model="resnet_binary_1adrianb"
 #model="densenet_binary"
 
 #dataset="cifar10"

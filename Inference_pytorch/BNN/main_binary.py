@@ -150,6 +150,13 @@ def main():
     # print("line 139 correct\n")
     logging.info("created model with configuration: %s", model_config)
 
+    # see model
+    for i, name in enumerate(model.state_dict()):
+        print(i, name, model.state_dict()[name].size())
+
+    # for i, (name, param) in enumerate(model.named_parameters()):
+    #     print(i, name)
+
     # optionally resume from a checkpoint
     if args.evaluate:
         if not os.path.isfile(args.evaluate):

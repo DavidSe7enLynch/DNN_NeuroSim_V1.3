@@ -125,8 +125,9 @@ class ResNet(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                BinarizeConv2d(self.inplanes, planes * block.expansion, hwArgs=hwArgs, name="ConvDownSample" + str(nameNum) + "_",
-                               kernel_size=1, stride=stride, bias=False),
+                # BinarizeConv2d(self.inplanes, planes * block.expansion, hwArgs=hwArgs, name="ConvDownSample" + str(nameNum) + "_",
+                #                kernel_size=1, stride=stride, bias=False),
+                nn.Conv2d(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(planes * block.expansion),
             )
 
@@ -185,8 +186,8 @@ class ResNet_imagenet(ResNet):
         self.layer4, nameNum = self._make_layer(block, 512, layers[3], hwArgs=hwArgs, nameNum=nameNum, stride=2)
         self.avgpool = nn.AvgPool2d(7)
 
-        self.bn2 = nn.BatchNorm1d(512 * block.expansion)
-        self.bn3 = nn.BatchNorm1d(num_classes)
+        self.bn2 = nn.BatchNorm2d(512 * block.expansion)
+        self.bn3 = nn.BatchNorm2d(num_classes)
         self.logsoftmax = nn.LogSoftmax()
 
         # self.fc = BinarizeLinear(512 * block.expansion, num_classes, hwArgs=hwArgs, name="FC0_")
@@ -226,7 +227,9 @@ class ResNet_cifar10(ResNet):
         self.bn2 = nn.BatchNorm1d(64 * self.inflate)
         self.bn3 = nn.BatchNorm1d(num_classes)
         self.logsoftmax = nn.LogSoftmax()
+
         self.fc = BinarizeLinear(64 * self.inflate, num_classes, hwArgs=hwArgs, name="FC0_")
+        # self.fc = nn.Linear(64 * self.inflate, num_classes)
 
         init_model(self)
         self.regime = {
@@ -245,6 +248,10 @@ def resnet_binary(hwArgs, **kwargs):
         num_classes = num_classes or 1000
         depth = depth or 50
         depth = 18
+
+        return ResNet_cifar10(hwArgs, num_classes=1000,
+                              block=BasicBlock, depth=18)
+
         if depth == 18:
             return ResNet_imagenet(hwArgs, num_classes=num_classes,
                                    block=BasicBlock, layers=[2, 2, 2, 2])

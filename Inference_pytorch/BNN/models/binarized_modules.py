@@ -593,11 +593,6 @@ class BinarizeConv2d(nn.Conv2d):
             self.hw = 0
             self.ADCprecision = 7
 
-
-        # middle results
-        # self.outputPartial
-        # self.outputDummyPartial
-
     def quantizationADC(self, outputPartial, outputDummyPartial):
         # choose one from these two: linear or non-linear
         if self.is_linear:
@@ -713,21 +708,15 @@ class BinarizeConv2d(nn.Conv2d):
         return output
 
     def forward(self, input):
-        # print("forward, input = ", input.size(), input[0][0][0])
-        is_input_bin = 0
         if input.size(1) != 3:
-            is_input_bin = 1
             input.data = Binarize(input.data)
         if not hasattr(self.weight, 'org'):
             self.weight.org = self.weight.data.clone()
         self.weight.data = Binarize(self.weight.org)
 
-        # print("conv: is_input_bin = ", is_input_bin)
-        # self.hw = 0
         if self.hw == 0:
             out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
-            # print("conv2d finished")
         else:
             out = self.neurosim_conv2d(input)
             # print("neurosim_conv2d finished: ", out.size(), out[0][0][0])

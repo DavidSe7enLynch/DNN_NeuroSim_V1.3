@@ -16,9 +16,10 @@ cd ${BNNPath}
 
 #model="vgg_cifar10_binary"
 #model="alexnet_binary"
-model="resnet_binary"
+#model="resnet_binary"
 #model="resnet"
 #model="resnet_binary_orig"
+model="resnet_binary_tf"
 #model="densenet_binary"
 
 #dataset="cifar10"
@@ -51,7 +52,7 @@ wl_input=8
 time=$(date +"%Y-%m-%d %T")
 echo "====start==== || ${model} || dataset=${dataset} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${wl_input} || ${time}"
 # train
-python main_binary.py --dataset ${dataset} --model ${model} --hw ${hw} -b 50 --epochs 10 > ./test/${date}/trainlog_hrr_${model}_dataset=${dataset}_${time}.txt 2>&1
+python main_binary.py --dataset ${dataset} --model ${model} --hw ${hw} -b 50 --epochs 30 > ./test/${date}/trainlog_hrr_${model}_dataset=${dataset}_${time}.txt 2>&1
 
 # inference
 #for ((i = 0; i < ${#ADCprecision_array[*]}; i++)); do

@@ -1,6 +1,6 @@
 import torch.nn as nn
 import math
-from .binarized_modules import BinarizeLinear, BinarizeConv2d
+from .binarized_modules import BinarizeConv2d
 from typing import Optional, Sequence
 
 __all__ = ['resnet_binary_tf']
@@ -68,7 +68,8 @@ class ResNet(nn.Module):
     #         raise ValueError(f"Only specs for layers {list(self.spec.keys())} defined.")
 
     def build(self):
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
+        # self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
+        self.conv1 = BinarizeConv2d(3, 64, kernel_size=7, stride=2, padding=3)
         self.batchnorm1 = nn.BatchNorm2d(64)
         self.relu1 = nn.ReLU(inplace=True)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1)
@@ -85,19 +86,19 @@ class ResNet(nn.Module):
         self.softmax = nn.LogSoftmax()
 
         init_model(self)
-        # self.regime = {
-        #     0: {'optimizer': 'Adam', 'lr': 1e-3},
-        #     30: {'lr': 5e-4},
-        #     60: {'lr': 1e-4},
-        #     90: {'lr': 5e-5}
-        # }
         self.regime = {
-            0: {'optimizer': 'SGD', 'lr': 1e-2,
-                'weight_decay': 1e-4, 'momentum': 0.9},
-            30: {'lr': 5e-3},
-            60: {'lr': 1e-3, 'weight_decay': 0},
-            90: {'lr': 1e-4}
+            0: {'optimizer': 'Adam', 'lr': 1e-3},
+            30: {'lr': 5e-4},
+            60: {'lr': 1e-4},
+            90: {'lr': 5e-5}
         }
+        # self.regime = {
+        #     0: {'optimizer': 'SGD', 'lr': 1e-2,
+        #         'weight_decay': 1e-4, 'momentum': 0.9},
+        #     30: {'lr': 5e-3},
+        #     60: {'lr': 1e-3, 'weight_decay': 0},
+        #     90: {'lr': 1e-4}
+        # }
 
     def _make_layer(self, block, inplanes, planes, blocks, stride=1):
         layers = []
@@ -125,134 +126,6 @@ class ResNet(nn.Module):
         out = self.fc(out)
         out = self.softmax(out)
         return out
-
-# class BinaryResNetE18Factory:
-#     def spec(self):
-#         spec = {
-#             18: ([2, 2, 2, 2], [64, 128, 256, 512]),
-#             34: ([3, 4, 6, 3], [64, 128, 256, 512]),
-#             50: ([3, 4, 6, 3], [256, 512, 1024, 2048]),
-#             101: ([3, 4, 23, 3], [256, 512, 1024, 2048]),
-#             152: ([3, 8, 36, 3], [256, 512, 1024, 2048]),
-#         }
-#         try:
-#             return spec[self.num_layers]
-#         except Exception:
-#             raise ValueError(f"Only specs for layers {list(self.spec.keys())} defined.")
-#
-#     def residual_block(self, x, filters, strides: int = 1):
-#         downsample = x.get_shape().as_list()[-1] != filters
-#         in_channels = filters[2]
-#         out_channels = filters[3]
-#
-#         if downsample:
-#             # residual = tf.keras.layers.AvgPool2D(pool_size=2, strides=2)(x)
-#             residual = nn.AvgPool2d(kernel_size=2, stride=2)(x)
-#             # residual = tf.keras.layers.Conv2D(
-#             #     filters,
-#             #     kernel_size=1,
-#             #     use_bias=False,
-#             #     kernel_initializer="glorot_normal",
-#             # )(residual)
-#             residual = nn.Conv2d(in_channels, out_channels, kernel_size=1)(residual)
-#             # residual = tf.keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)(
-#             #     residual
-#             # )
-#             residual = nn.BatchNorm2d(filters[3])(residual)
-#         else:
-#             residual = x
-#
-#         # x = lq.layers.QuantConv2D(
-#         #     filters,
-#         #     kernel_size=3,
-#         #     strides=strides,
-#         #     padding="same",
-#         #     input_quantizer=self.input_quantizer,
-#         #     kernel_quantizer=self.kernel_quantizer,
-#         #     kernel_constraint=self.kernel_constraint,
-#         #     kernel_initializer="glorot_normal",
-#         #     use_bias=False,
-#         # )(x)
-#         x = BinarizeConv2d(in_channels, out_channels, kernel_size=3, stride=strides)(x)
-#         # x = tf.keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)(x)
-#         x = nn.BatchNorm2d(out_channels)(x)
-#
-#         # return tf.keras.layers.add([x, residual])
-#         return x + residual
-#
-#     def build(self):
-#         # if self.image_input.shape[1] and self.image_input.shape[1] < 50:
-#         #     x = tf.keras.layers.Conv2D(
-#         #         self.initial_filters,
-#         #         kernel_size=3,
-#         #         padding="same",
-#         #         kernel_initializer="he_normal",
-#         #         use_bias=False,
-#         #     )(self.image_input)
-#         # else:
-#         #     x = tf.keras.layers.Conv2D(
-#         #         self.initial_filters,
-#         #         kernel_size=7,
-#         #         strides=2,
-#         #         padding="same",
-#         #         kernel_initializer="he_normal",
-#         #         use_bias=False,
-#         #     )(self.image_input)
-#         x = nn.Conv2d(3, 64, kernel_size=7, stride=2)
-#         # x = tf.keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)(x)
-#         x = nn.BatchNorm2d(64)(x)
-#         # x = tf.keras.layers.Activation("relu")(x)
-#         x = nn.ReLU(inplace=True)(x)
-#         # x = tf.keras.layers.MaxPool2D(3, strides=2, padding="same")(x)
-#         x = nn.MaxPool2d(3, stride=2, padding=1)(x)
-#         # x = tf.keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)(x)
-#         x = nn.BatchNorm2d(64)(x)
-#
-#         for block, (layers, filters) in enumerate(zip(*self.spec)):
-#             # This trick adds shortcut connections between original ResNet
-#             # blocks. We wultiply the number of blocks by two, but add only one
-#             # layer instead of two in each block
-#             for layer in range(layers * 2):
-#                 strides = 1 if block == 0 or layer != 0 else 2
-#                 x = self.residual_block(x, filters, strides=strides)
-#
-#         # x = tf.keras.layers.Activation("relu")(x)
-#         x = nn.ReLU(inplace=True)(x)
-#
-#         # if self.include_top:
-#         #     x = utils.global_pool(x)
-#         #     x = tf.keras.layers.Dense(
-#         #         self.num_classes, kernel_initializer="glorot_normal"
-#         #     )(x)
-#         #     x = tf.keras.layers.Activation("softmax", dtype="float32")(x)
-#
-#         # model = tf.keras.Model(
-#         #     inputs=self.image_input,
-#         #     outputs=x,
-#         #     name=f"binary_resnet_e_{self.num_layers}",
-#         # )
-#
-#         # Load weights.
-#         if self.weights == "imagenet":
-#             # Download appropriate file
-#             if self.include_top:
-#                 weights_path = utils.download_pretrained_model(
-#                     model="resnet_e",
-#                     version="v0.1.0",
-#                     file="resnet_e_18_weights.h5",
-#                     file_hash="bde4a64d42c164a7b10a28debbe1ad5b287c499bc0247ecb00449e6e89f3bf5b",
-#                 )
-#             else:
-#                 weights_path = utils.download_pretrained_model(
-#                     model="resnet_e",
-#                     version="v0.1.0",
-#                     file="resnet_e_18_weights_notop.h5",
-#                     file_hash="14cb037e47d223827a8d09db88ec73d60e4153a4464dca847e5ae1a155e7f525",
-#                 )
-#             model.load_weights(weights_path)
-#         elif self.weights is not None:
-#             model.load_weights(self.weights)
-#         return model
 
 def resnet_binary_tf(hwArgs, **kwargs):
     num_classes, depth, dataset = map(

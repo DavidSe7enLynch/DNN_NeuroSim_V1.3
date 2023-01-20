@@ -573,6 +573,9 @@ class BinarizeConv2d(nn.Conv2d):
 
     def __init__(self, *kargs, hwArgs=None, name="BinarizeConv2d", **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
+
+        self.binarize = FastSign()
+
         self.wl_weight = 1
         self.onoffratio = 10
         self.subArray = 128
@@ -733,3 +736,19 @@ class BinarizeConv2d(nn.Conv2d):
         #     out += self.bias.view(1, -1, 1, 1).expand_as(out)
 
         return out
+
+
+class FastSign(nn.Module):
+    def __init__(self):
+        super(FastSign, self).__init__()
+
+    def forward(self, input):
+        out_forward = torch.sign(input)
+        ''' 
+        Only inputs in the range [-t_clip,t_clip] 
+        have gradient 1. 
+        '''
+        t_clip = 1.3
+        out_backward = torch.clamp(input, -t_clip, t_clip)
+        return (out_forward.detach()
+                - out_backward.detach() + out_backward)

@@ -15,8 +15,8 @@ mkdir ${date}
 cd ${BNNPath}
 
 #model="vgg_cifar10_binary"
-model="alexnet_binary"
-#model="resnet_binary"
+#model="alexnet_binary"
+model="resnet_binary_tf"
 
 #dataset="cifar10"
 dataset="imagenet"
@@ -38,12 +38,14 @@ wl_input=8
 # alexnet tensorflow version
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-10-05_01-13-20/model_best.pth.tar"
 # alexnet imagenet 100 epoch
-model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-10-25_20-56-17/model_best.pth.tar"
+#model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-10-25_20-56-17/model_best.pth.tar"
 # alexnet cifar10 non-binary
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-06-17_17-36-26/model_best.pth.tar"
 
 # resnet binary 1 epoch hw=0
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-12-08_23-03-59/model_best.pth.tar"
+# resnet binary tf 15 epoch hw=0
+model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2023-01-18_15-16-34/model_best.pth.tar"
 
 
 time=$(date +"%Y-%m-%d %T")

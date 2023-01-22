@@ -31,7 +31,7 @@ class ResidualBlock(nn.Module):
         self.conv_d = nn.Conv2d(in_channels, out_channels, kernel_size=1)
         self.batchnorm_d = nn.BatchNorm2d(out_channels)
 
-        self.bconv = BinarizeConv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        self.bconv = BinarizeConv2d(in_channels, out_channels, hwArgs=hwArgsGlobal, kernel_size=3, stride=stride, padding=1)
         self.batchnorm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
@@ -54,22 +54,9 @@ class ResNet(nn.Module):
         self.num_classes = num_classes
         self.build()
 
-    # def spec(self):
-    #     spec = {
-    #         18: ([2, 2, 2, 2], [64, 128, 256, 512]),
-    #         34: ([3, 4, 6, 3], [64, 128, 256, 512]),
-    #         50: ([3, 4, 6, 3], [256, 512, 1024, 2048]),
-    #         101: ([3, 4, 23, 3], [256, 512, 1024, 2048]),
-    #         152: ([3, 8, 36, 3], [256, 512, 1024, 2048]),
-    #     }
-    #     try:
-    #         return spec[self.num_layers]
-    #     except Exception:
-    #         raise ValueError(f"Only specs for layers {list(self.spec.keys())} defined.")
-
     def build(self):
         # self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
-        self.conv1 = BinarizeConv2d(3, 64, kernel_size=7, stride=2, padding=3)
+        self.conv1 = BinarizeConv2d(3, 64, hwArgs=hwArgsGlobal, kernel_size=7, stride=2, padding=3)
         self.batchnorm1 = nn.BatchNorm2d(64)
         self.relu1 = nn.ReLU(inplace=True)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1)
@@ -127,9 +114,15 @@ class ResNet(nn.Module):
         out = self.softmax(out)
         return out
 
+
+hwArgsGlobal = None
+
+
 def resnet_binary_tf(hwArgs, **kwargs):
     num_classes, depth, dataset = map(
         kwargs.get, ['num_classes', 'depth', 'dataset'])
+    global hwArgsGlobal
+    hwArgsGlobal = hwArgs
     if dataset == "imagenet":
         return ResNet(1000)
     elif dataset == "cifar10":

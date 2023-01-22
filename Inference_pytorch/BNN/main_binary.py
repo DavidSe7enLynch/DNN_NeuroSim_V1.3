@@ -25,6 +25,7 @@ from torchvision.utils import save_image
 from GPUtil import showUtilization as gpu_usage
 from numba import cuda
 import gc
+from pytorch_model_summary import summary
 
 from utee import hook
 from subprocess import call
@@ -151,8 +152,9 @@ def main():
     logging.info("created model with configuration: %s", model_config)
 
     # see model
-    for i, name in enumerate(model.state_dict()):
-        print(i, name, model.state_dict()[name].size())
+    print(summary(model, torch.zeros(1, 3, 224, 224)))
+    # for i, name in enumerate(model.state_dict()):
+    #     print(i, name, model.state_dict()[name].size())
 
     # for i, (name, param) in enumerate(model.named_parameters()):
     #     print(i, name)

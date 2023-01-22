@@ -637,7 +637,7 @@ class BinarizeConv2d(nn.Conv2d):
 
     def firstLayer(self, input, output, upper, lower, mask, dummyP):
         inputAbsMax = max(abs(torch.min(input).item()), abs(torch.max(input).item()))
-        expandRatio = (2 ** self.wl_input - 1) / inputAbsMax
+        expandRatio = (2 ** self.wl_input - 1) / inputAbsMax if inputAbsMax != 0 else 1
         # print("inputabsmax, expandratio = ", inputAbsMax, expandRatio)
         inputQ = torch.round(expandRatio * input)
         outputIN = torch.zeros_like(output)

@@ -8,3 +8,4 @@ from .densenet_binary import *
 from .resnet_binary_orig import *
 from .resnet_binary_1adrianb import *
 from .resnet_binary_tf import *
+from .densenet_binary_tf import *

@@ -15,18 +15,18 @@ mkdir ${date}
 cd ${BNNPath}
 
 #model="vgg_cifar10_binary"
-model="alexnet_binary"
-#model="resnet_binary"
+#model="alexnet_binary"
+model="resnet_binary_tf"
 
 #dataset="cifar10"
 dataset="imagenet"
 
-hw=0
+hw=1
 
 #ADCprecision_array=(3 4 5 6 7 8 9)
 #wl_input_array=(1 2 3 4 5 6 7 8)
-ADCprec=6
-wl_input=2
+ADCprec=4
+wl_input=4
 
 # vgg cifar10
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar"
@@ -38,12 +38,14 @@ wl_input=2
 # alexnet tensorflow version
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-10-05_01-13-20/model_best.pth.tar"
 # alexnet imagenet 100 epoch
-model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-10-25_20-56-17/model_best.pth.tar"
+#model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-10-25_20-56-17/model_best.pth.tar"
 # alexnet cifar10 non-binary
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-06-17_17-36-26/model_best.pth.tar"
 
 # resnet binary 1 epoch hw=0
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-12-08_23-03-59/model_best.pth.tar"
+# resnet binary 120 epoch hw=0
+model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2023-01-19_17-35-56/model_best.pth.tar"
 
 
 time=$(date +"%Y-%m-%d %T")

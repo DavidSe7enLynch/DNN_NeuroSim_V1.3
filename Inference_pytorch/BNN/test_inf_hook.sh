@@ -22,11 +22,12 @@ model="resnet_binary_tf"
 dataset="imagenet"
 
 hw=1
+hook=True
 
 #ADCprecision_array=(3 4 5 6 7 8 9)
 #wl_input_array=(1 2 3 4 5 6 7 8)
-ADCprec=8
-wl_input=6
+ADCprec=7
+wl_input=7
 
 # vgg cifar10
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar"
@@ -61,7 +62,7 @@ echo "====start==== || ${model} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${
 #done
 
 # run in parallel
-python main_binary.py --hw ${hw} --ADCprec ${ADCprec} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path} > ./test/${date}/inferencelogHRRmodel=${model}_dataset=${dataset}_hw=${hw}_ADCprec=${ADCprec}_wl_input=${wl_input}_${time}.txt 2>&1
+python main_binary.py --hook ${hook} --hw ${hw} --ADCprec ${ADCprec} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path}
 
 #rm -rf ../layer_record_${model}
 #cp -r ./layer_record_${model} ..

@@ -12,31 +12,33 @@ from utee import float_quantizer
 
 
 def Neural_Sim(self, input, output):
-    global model_n, FP, layer_name
+    global model_n, FP
 
     # print("quantize layer, input: ", self.name)
     # print("input size: ", input[0].size())
-    input_file_name = './layer_record_' + str(model_n) + '/input' + str(layer_name) + '.csv'
-    weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(layer_name) + '.csv'
+    input_file_name = './layer_record_' + str(model_n) + '/input' + str(self.name) + '.csv'
+    weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(self.name) + '.csv'
     f = open('./layer_record_' + str(model_n) + '/trace_command.sh', "a")
     f.write(weight_file_name + ' ' + input_file_name + ' ')
     # if FP:
     #     weight_q = float_quantizer.float_range_quantize(self.weight, self.wl_weight)
     # else:
     #     weight_q = wage_quantizer.Q(self.weight, self.wl_weight)
-    write_matrix_weight(self.weight.cpu().data.numpy(), weight_file_name)
+    binarized_weight = self.weight.cpu().data.sign().numpy()
+    write_matrix_weight(binarized_weight, weight_file_name)
     # print(self.weight.shape)
     # print(len(self.weight.shape))
     # print(self.weight.shape[-1])
     # print("in neural_sim: wl_input: ", self.wl_input)
+    wl_input = 1
     if len(self.weight.shape) > 2:
         k = self.weight.shape[-1]
         padding = self.padding
         stride = self.stride
         write_matrix_activation_conv(stretch_input(input[0].cpu().data.numpy(), k, padding, stride), None,
-                                     self.wl_input, input_file_name)
+                                     wl_input, input_file_name)
     else:
-        write_matrix_activation_fc(input[0].cpu().data.numpy(), None, self.wl_input, input_file_name)
+        write_matrix_activation_fc(input[0].cpu().data.numpy(), None, wl_input, input_file_name)
 
 
 def write_matrix_weight(input_matrix, filename):
@@ -134,7 +136,7 @@ def remove_hook_list(hook_handle_list):
 
 
 def hardware_evaluation(model, wl_weight, wl_activation, model_name):
-    global model_n, FP, layer_name
+    global model_n, FP
     model_n = model_name
     # FP = 1 if mode == 'FP' else 0
     FP = 0
@@ -148,17 +150,20 @@ def hardware_evaluation(model, wl_weight, wl_activation, model_name):
     f.write('./NeuroSIM/main ./NeuroSIM/NetWork_' + str(model_name) + '.csv ' + str(wl_weight) + ' ' + str(
         wl_activation) + ' ')
 
+    layer_name: str
+    conv_linear_layer_idx = 0
     for i, layer in enumerate(model.modules()):
-        print(i, layer)
         if isinstance(layer, (BinarizeConv2d, nn.Conv2d)) or isinstance(layer, (BinarizeLinear, nn.Linear)):
-            print("inside hardware_evaluation, layer: ", layer)
+            conv_linear_layer_idx += 1
             if isinstance(layer, BinarizeConv2d):
-                layer_name = "BinarizeConv2d_" + str(i)
+                layer_name = "BinarizeConv2d_" + str(conv_linear_layer_idx)
             elif isinstance(layer, nn.Conv2d):
-                layer_name = "Conv2d_" + str(i)
+                layer_name = "Conv2d_" + str(conv_linear_layer_idx)
             elif isinstance(layer, BinarizeLinear):
-                layer_name = "BinarizeLinear_" + str(i)
+                layer_name = "BinarizeLinear_" + str(conv_linear_layer_idx)
             elif isinstance(layer, nn.Linear):
-                layer_name = "Linear_" + str(i)
+                layer_name = "Linear_" + str(conv_linear_layer_idx)
+            print(layer_name, layer)
+            layer.name = layer_name
             hook_handle_list.append(layer.register_forward_hook(Neural_Sim))
     return hook_handle_list

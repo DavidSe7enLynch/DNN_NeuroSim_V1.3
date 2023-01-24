@@ -79,7 +79,7 @@ parser.add_argument('--epochs', default=2500, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=100, type=int,
+parser.add_argument('-b', '--batch-size', default=1000, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--optimizer', default='SGD', type=str, metavar='OPT',
                     help='optimizer function used')
@@ -98,6 +98,7 @@ parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
 parser.add_argument('--hw', type=int, default=0)
 parser.add_argument('--ADCprec', type=int, default=7)
 parser.add_argument('--wl_input', type=int, default=8)
+parser.add_argument('--hook', type=bool, default=False)
 
 # /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-17_17-36-26/model_best.pth.tar
 # /Users/ruironghuang/study/DNN_research/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar
@@ -145,6 +146,7 @@ def main():
     if args.model_config is not '':
         model_config = dict(model_config, **literal_eval(args.model_config))
 
+    global hwArgs
     hwArgs = HWargs(args.hw, args.ADCprec, args.wl_input)
 
     model = model(hwArgs, **model_config)
@@ -369,6 +371,7 @@ def train(data_loader, model, criterion, epoch, optimizer):
 
 
 def validate(data_loader, model, criterion, epoch):
+    global args
     # switch to evaluate mode
     model.eval()
     # see model
@@ -379,9 +382,9 @@ def validate(data_loader, model, criterion, epoch):
     num_samples = 0
     with torch.no_grad():
         for i, (x, y) in enumerate(data_loader):
-            # if i == 0:
-            #     print("create hook list")
-            #     hook_handle_list = hook.hardware_evaluation(model, hwArgs.m_wlInput, 1, args.model)
+            if i == 0 and args.hook:
+                print("create hook list")
+                hook_handle_list = hook.hardware_evaluation(model, hwArgs.m_wlInput, 1, args.model)
             x, y = x.cuda(), y.cuda()
             # print(x.size())
             # print("x\n", x)
@@ -391,9 +394,9 @@ def validate(data_loader, model, criterion, epoch):
             # print("pred\n", predictions)
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
-            # if i == 0:
-            #     print("remove hook list")
-            #     hook.remove_hook_list(hook_handle_list)
+            if i == 0 and args.hook:
+                print("remove hook list")
+                hook.remove_hook_list(hook_handle_list)
 
     print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples) * 100:.2f}')
 

@@ -12,12 +12,12 @@ from utee import float_quantizer
 
 
 def Neural_Sim(self, input, output):
-    global model_n, FP
+    global model_n, FP, layer_name
 
     # print("quantize layer, input: ", self.name)
     # print("input size: ", input[0].size())
-    input_file_name = './layer_record_' + str(model_n) + '/input' + str(self.name) + '.csv'
-    weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(self.name) + '.csv'
+    input_file_name = './layer_record_' + str(model_n) + '/input' + str(layer_name) + '.csv'
+    weight_file_name = './layer_record_' + str(model_n) + '/weight' + str(layer_name) + '.csv'
     f = open('./layer_record_' + str(model_n) + '/trace_command.sh', "a")
     f.write(weight_file_name + ' ' + input_file_name + ' ')
     # if FP:
@@ -134,7 +134,7 @@ def remove_hook_list(hook_handle_list):
 
 
 def hardware_evaluation(model, wl_weight, wl_activation, model_name):
-    global model_n, FP
+    global model_n, FP, layer_name
     model_n = model_name
     # FP = 1 if mode == 'FP' else 0
     FP = 0
@@ -152,5 +152,13 @@ def hardware_evaluation(model, wl_weight, wl_activation, model_name):
         print(i, layer)
         if isinstance(layer, (BinarizeConv2d, nn.Conv2d)) or isinstance(layer, (BinarizeLinear, nn.Linear)):
             print("inside hardware_evaluation, layer: ", layer)
+            if isinstance(layer, BinarizeConv2d):
+                layer_name = "BinarizeConv2d_" + str(i)
+            elif isinstance(layer, nn.Conv2d):
+                layer_name = "Conv2d_" + str(i)
+            elif isinstance(layer, BinarizeLinear):
+                layer_name = "BinarizeLinear_" + str(i)
+            elif isinstance(layer, nn.Linear):
+                layer_name = "Linear_" + str(i)
             hook_handle_list.append(layer.register_forward_hook(Neural_Sim))
     return hook_handle_list

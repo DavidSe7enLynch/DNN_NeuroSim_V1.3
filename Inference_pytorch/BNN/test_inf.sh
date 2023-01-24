@@ -25,8 +25,8 @@ hw=1
 
 #ADCprecision_array=(3 4 5 6 7 8 9)
 #wl_input_array=(1 2 3 4 5 6 7 8)
-ADCprec=4
-wl_input=4
+ADCprec=7
+wl_input=7
 
 # vgg cifar10
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-06-21_18-05-06/model_best.pth.tar"

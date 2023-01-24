@@ -671,8 +671,8 @@ class BinarizeConv2d(nn.Conv2d):
         output = output + outputIN / expandRatio
         return output
 
-    def neurosim_conv2d(self, input):
-        outputOriginal = nn.functional.conv2d(input, self.weight, None, self.stride,
+    def neurosim_conv2d(self, input, weight):
+        outputOriginal = nn.functional.conv2d(input, weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
         # set parameters for Hardware Inference
         onoffratio = self.onoffratio
@@ -693,12 +693,12 @@ class BinarizeConv2d(nn.Conv2d):
 
         # print("weight size: ", self.weight.shape)
         # print("is_linear: ", self.is_linear)
-        for i in range(self.weight.shape[2]):
-            for j in range(self.weight.shape[3]):
+        for i in range(weight.shape[2]):
+            for j in range(weight.shape[3]):
                 for s in range(numSubArray):
-                    mask = torch.zeros_like(self.weight)
+                    mask = torch.zeros_like(weight)
                     mask[:, (s * self.subArray):(s + 1) * self.subArray, i, j] = 1
-                    if self.weight.shape[1] == 3:
+                    if weight.shape[1] == 3:
                         # if i == 0 and j == 0:
                             # print("first layer, input = ", input[0][0][0][0])
                         # first layer, convert to binary sequence
@@ -725,9 +725,13 @@ class BinarizeConv2d(nn.Conv2d):
                 out = nn.functional.conv2d(input, self.binarize(self.weight), None, self.stride,
                                            self.padding, self.dilation, self.groups)
         else:
-            out = self.neurosim_conv2d(input)
+            self.binarized_weight = self.binarize(self.weight)
+            if input.size(1) != 3:
+                out = self.neurosim_conv2d(self.binarize(input), self.binarized_weight)
+            else:
+                out = self.neurosim_conv2d(input, self.binarized_weight)
             # print("neurosim_conv2d finished: ", out.size(), out[0][0][0])
-            # conv2d_out = nn.functional.conv2d(input, self.weight, None, self.stride,
+            # conv2d_out = nn.functional.conv2d(input, self.binarized_weight, None, self.stride,
             #                        self.padding, self.dilation, self.groups)
             # print("conv2d finished: ", conv2d_out.size(), conv2d_out[0][0][0])
 

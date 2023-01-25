@@ -62,10 +62,12 @@ echo "====start==== || ${model} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${
 #done
 
 # run in parallel
-python main_binary.py --hook ${hook} --hw ${hw} --ADCprec ${ADCprec} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path}
+python main_binary.py --hook ${hook} --hw ${hw} --ADCprec ${ADCprec} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path} > ./test/${date}/hooklogHRRmodel=${model}_dataset=${dataset}_hw=${hw}_ADCprec=${ADCprecision_array[i]}_wl_input=${wl_input}_${time}.txt 2>&1
 
-#rm -rf ../layer_record_${model}
-#cp -r ./layer_record_${model} ..
+rm -rf ../layer_record_${model}
+mv ./layer_record_${model} ..
+
+
 
 time=$(date +"%Y-%m-%d %T")
 echo "=====end===== || ${model} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${wl_input} || ${time}"

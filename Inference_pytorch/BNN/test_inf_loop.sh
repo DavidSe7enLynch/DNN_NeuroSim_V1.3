@@ -3,7 +3,6 @@
 
 date=$(date +"%Y-%m-%d")
 
-#scartchPath=/scratch-x3
 scartchPath="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN"
 BNNPath="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN"
 
@@ -23,9 +22,9 @@ dataset="imagenet"
 
 hw=1
 
-#ADCprecision_array=(3 4 5 6 7 8 9)
+ADCprecision_array=(3 4 5 6 7 8)
 #wl_input_array=(1 2 3 4 5 6 7 8)
-ADCprec=7
+#ADCprec=7
 wl_input=8
 
 # vgg cifar10
@@ -48,23 +47,12 @@ wl_input=8
 model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2023-01-19_17-35-56/model_best.pth.tar"
 
 
-time=$(date +"%Y-%m-%d %T")
-echo "====start==== || ${model} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${wl_input} || ${time}"
-# train
-#python main_binary.py --dataset ${dataset} --model ${model} --hw ${hw} --epochs 10 > ./test/${date}/trainlog_hrr_${model}_dataset=${dataset}_${time}.txt 2>&1
+for ((i = 0; i < ${#ADCprecision_array[*]}; i++)); do
+  time=$(date +"%Y-%m-%d %T")
+  echo "====start==== || ${model} || hw=${hw} || ADCprec=${ADCprecision_array[i]} || wl_input=${wl_input} || ${time}"
 
-# inference
-#for ((i = 0; i < ${#ADCprecision_array[*]}; i++)); do
-#  echo "i = ${i} started"
-#  python main_binary.py --hw ${hw} --ADCprec ${ADCprecision_array[i]} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path} > ./test/${date}/inferencelogHRRmodel=${model}_dataset=${dataset}_hw=${hw}_ADCprec=${ADCprecision_array[i]}_wl_input=${wl_input}_${time}.txt 2>&1
-#  echo "i = ${i} ended"
-#done
+  python main_binary.py --hw ${hw} --ADCprec ${ADCprecision_array[i]} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path} > ./test/${date}/inferencelogHRRmodel=${model}_dataset=${dataset}_hw=${hw}_ADCprec=${ADCprecision_array[i]}_wl_input=${wl_input}_${time}.txt 2>&1
 
-# run in parallel
-python main_binary.py --hw ${hw} --ADCprec ${ADCprec} --wl_input ${wl_input} --model ${model} --dataset ${dataset} -e ${model_path} > ./test/${date}/inferencelogHRRmodel=${model}_dataset=${dataset}_hw=${hw}_ADCprec=${ADCprec}_wl_input=${wl_input}_${time}.txt 2>&1
-
-#rm -rf ../layer_record_${model}
-#cp -r ./layer_record_${model} ..
-
-time=$(date +"%Y-%m-%d %T")
-echo "=====end===== || ${model} || hw=${hw} || ADCprec=${ADCprec} || wl_input=${wl_input} || ${time}"
+  time=$(date +"%Y-%m-%d %T")
+  echo "=====end===== || ${model} || hw=${hw} || ADCprec=${ADCprecision_array[i]} || wl_input=${wl_input} || ${time}"
+done

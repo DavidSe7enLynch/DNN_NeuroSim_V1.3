@@ -598,19 +598,19 @@ class BinarizeConv2d(nn.Conv2d):
 
     def quantizationADC(self, outputPartial, outputDummyPartial):
         # choose one from these two: linear or non-linear
-        if self.is_linear:
-            # linear quantization
-            outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
-                                                              self.ADCprecision)
-            outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
-                                                                   self.ADCprecision)
-        else:
-            # non-linear quantization
-            # print("calling nonlinear")
-            outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
-                                                                 self.ADCprecision)
-            outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
-                                                                      self.ADCprecision)
+        # if self.is_linear:
+        # linear quantization
+        outputPartialQ = wage_quantizer.LinearQuantizeOut(outputPartial,
+                                                          self.ADCprecision)
+        outputDummyPartialQ = wage_quantizer.LinearQuantizeOut(outputDummyPartial,
+                                                               self.ADCprecision)
+        # else:
+        #     # non-linear quantization
+        #     # print("calling nonlinear")
+        #     outputPartialQ = wage_quantizer.NonLinearQuantizeOut(outputPartial,
+        #                                                          self.ADCprecision)
+        #     outputDummyPartialQ = wage_quantizer.NonLinearQuantizeOut(outputDummyPartial,
+        #                                                               self.ADCprecision)
         return outputPartialQ, outputDummyPartialQ
 
     def binaryLayer(self, input, output, upper, lower, mask, dummyP):

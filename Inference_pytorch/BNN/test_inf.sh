@@ -16,16 +16,17 @@ cd ${BNNPath}
 
 #model="vgg_cifar10_binary"
 #model="alexnet_binary"
-model="resnet_binary_tf"
+#model="resnet_binary_tf"
+model="densenet_binary_tf"
 
 #dataset="cifar10"
 dataset="imagenet"
 
-hw=1
+hw=0
 
 #ADCprecision_array=(3 4 5 6 7 8 9)
 #wl_input_array=(1 2 3 4 5 6 7 8)
-ADCprec=7
+ADCprec=8
 wl_input=8
 
 # vgg cifar10
@@ -45,7 +46,10 @@ wl_input=8
 # resnet binary 1 epoch hw=0
 #model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2022-12-08_23-03-59/model_best.pth.tar"
 # resnet binary 120 epoch hw=0
-model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2023-01-19_17-35-56/model_best.pth.tar"
+#model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2023-01-19_17-35-56/model_best.pth.tar"
+
+# densenet binary 46 epoch hw=0
+model_path="/home/rh539/DNN_NeuroSim_V1.3/Inference_pytorch/BNN/results/2023-01-23_23-06-20/model_best.pth.tar"
 
 
 time=$(date +"%Y-%m-%d %T")

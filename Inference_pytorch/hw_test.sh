@@ -13,11 +13,11 @@ make
 cd ..
 
 # test
-time=`date +"%Y-%m-%d %T"`
 
 #model='vgg_cifar10_binary'
 #model='alexnet_binary'
-model='resnet_binary_tf'
+#model='resnet_binary_tf'
+model='densenet_binary_tf'
 
 operationmode=6
 cellBit=1
@@ -31,6 +31,16 @@ pipeline="true"
 #novelmapping="true"
 novelmapping="false"
 
-ADCprecision="5"
+ADCprecision=3
+
+wl_weight=1
+
 #mv BNN/layer_record_${model} .
-sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_ADCprecision=${ADCprecision}_pipeline=${pipeline}_novelmapping=${novelmapping}_${time}.txt 2>&1
+
+time=`date +"%Y-%m-%d %T"`
+echo "====start==== || ${model} || ADCprec=${ADCprecision} || wl_weight=${wl_weight} || ${time}"
+
+sh ./layer_record_${model}/trace_command.sh > ./BNN/test/${date}/hwlog_hrr_${model}_technode=${technode}_operationmode=${operationmode}_cellBit=${cellBit}_ADCprecision=${ADCprecision}_wl_weight=${wl_weight}_pipeline=${pipeline}_novelmapping=${novelmapping}_${time}.txt 2>&1
+
+time=`date +"%Y-%m-%d %T"`
+echo "=====end===== || ${model} || ADCprec=${ADCprecision} || wl_weight=${wl_weight} || ${time}"

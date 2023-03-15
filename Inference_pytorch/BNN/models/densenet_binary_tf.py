@@ -25,7 +25,7 @@ class DenseBlock(nn.Module):
         self.out_channels = out_channels
 
         self.batchnorm = nn.BatchNorm2d(in_channels)
-        self.bconv = BinarizeConv2d(in_channels, out_channels, kernel_size=3, dilation=dilation, padding=1)
+        self.bconv = BinarizeConv2d(in_channels, out_channels, hwArgs=hwArgsGlobal, kernel_size=3, dilation=dilation, padding=1)
 
     def forward(self, x):
         out = self.batchnorm(x)
@@ -60,7 +60,8 @@ class DenseNet(nn.Module):
     def __init__(self):
         super(DenseNet, self).__init__()
         self.start = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
+            # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
+            BinarizeConv2d(3, 64, hwArgs=hwArgsGlobal, kernel_size=7, stride=2, padding=3),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(3, stride=2, padding=1)
@@ -115,7 +116,11 @@ class DenseNet28(DenseNet):
     layers = (6, 6, 6, 5)
 
 
+hwArgsGlobal = None
+
 def densenet_binary_tf(hwArgs, **kwargs):
+    global hwArgsGlobal
+    hwArgsGlobal = hwArgs
     return DenseNet28()
 
 

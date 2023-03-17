@@ -86,5 +86,3 @@ inference_wlinput() {
 #inference_wlinput 6
 #inference_wlinput 7
 #inference_wlinput 8
-
-
